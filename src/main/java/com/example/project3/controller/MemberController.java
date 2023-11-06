@@ -1,9 +1,11 @@
 package com.example.project3.controller;
 
+import com.example.project3.dto.request.LoginRequest;
 import com.example.project3.dto.request.SignupRequest;
 import com.example.project3.service.MemberService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,7 +24,7 @@ public class MemberController {
     private final MemberService memberService;
 
     @PostMapping("/signup")
-    public ResponseEntity<?> test1(@Valid @RequestBody SignupRequest request, BindingResult bindingResult) {
+    public ResponseEntity<?> signup(@Valid @RequestBody SignupRequest request) {
         log.info("userName = {}",request.getUserName());
         log.info("email = {}",request.getEmail());
         log.info("address = {}", request.getAddress());
@@ -31,11 +33,13 @@ public class MemberController {
         log.info("phoneNumber = {}", request.getPhoneNumber());
         log.info("gender = {}", request.getGender());
 
-        if (bindingResult.hasErrors()) {
-            Map<String, String> errors = new HashMap<>();
-            bindingResult.getFieldErrors().forEach(error -> errors.put(error.getField(), error.getDefaultMessage()));
-            return ResponseEntity.badRequest().body(errors);
-        }
         return memberService.signup(request);
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<String> login(@Valid @RequestBody LoginRequest request) {
+        String token = memberService.login(request);
+        return new ResponseEntity<>(token, HttpStatus.CREATED);
+
     }
 }

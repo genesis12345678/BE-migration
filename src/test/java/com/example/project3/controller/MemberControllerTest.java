@@ -1,24 +1,28 @@
-package com.example.project3;
+package com.example.project3.controller;
 
-import com.example.project3.domain.Member;
+import com.example.project3.Entity.Member;
+import com.example.project3.config.jwt.TokenProvider;
+import com.example.project3.dto.request.LoginRequest;
 import com.example.project3.dto.request.SignupRequest;
 import com.example.project3.repository.MemberRepository;
 import com.example.project3.service.MemberService;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.datafaker.Faker;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.http.StreamingHttpOutputMessage;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
+import java.time.Duration;
 import java.util.Locale;
-import java.util.Random;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -28,11 +32,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 public class MemberControllerTest {
 
+    private final static Faker faker = new Faker(new Locale("ko"));
+
     @Autowired
     private MemberService memberService;
 
     @Autowired
     private MemberRepository memberRepository;
+
+    @Autowired
+    private TokenProvider tokenProvider;
 
     @Autowired
     private MockMvc mockMvc;
@@ -48,7 +57,6 @@ public class MemberControllerTest {
     @DisplayName("회원 가입에 성공한다.")
     void successSignUp() throws Exception{
         // given
-        Faker faker = new Faker(new Locale("ko"));
         // Mock data
         String username = faker.name().lastName() + faker.name().firstName();
         String email = faker.internet().emailAddress();
@@ -80,8 +88,6 @@ public class MemberControllerTest {
     @DisplayName("회원 가입에 실패한다.(유효하지 않은 이메일과 비밀번호, 전화번호)")
     void failSignup() throws Exception{
         // given
-        Faker faker = new Faker(new Locale("ko"));
-
         String username = faker.name().lastName() + faker.name().firstName();
         String email = faker.internet().password();
         String password = faker.internet().password(8, 20);
@@ -111,8 +117,6 @@ public class MemberControllerTest {
     @DisplayName("회원 가입에 실패한다.(중복 회원)")
     void duplicateSignup() throws Exception{
         // given
-        Faker faker = new Faker(new Locale("ko"));
-
         String username = faker.name().lastName() + faker.name().firstName();
         String email = faker.internet().emailAddress();
         String password = faker.internet().password(8,15) + "12@";
@@ -144,9 +148,54 @@ public class MemberControllerTest {
                 .andExpect(content().string("Email already exists"));
     }
 
+
+
+    @DisplayName("로그인 성공")
+    @Test
+    void login() throws Exception {
+        // given
+        final String url = "/login";
+
+        String username = faker.name().lastName() + faker.name().firstName();
+        String email = faker.internet().emailAddress();
+        String address = faker.address().fullAddress();
+        String imageURL = faker.internet().avatar();
+        String nickName = faker.name().prefix() + faker.name().firstName();
+        String phoneNumber = "010" + faker.numerify("########");
+        String gender = faker.options().option("MALE", "FEMALE");
+        String password = "testPassword13@";
+
+        SignupRequest request = new SignupRequest(username, email, password,
+                address, imageURL, nickName, gender, phoneNumber);
+
+        final String requestBody = objectMapper.writeValueAsString(request);
+
+        // when
+        ResultActions result = getResult(requestBody); // 먼저 "/signup"으로 회원가입 신청
+
+        Member member = memberRepository.findByEmail(email)
+                .orElseThrow(()->new IllegalArgumentException("Unexpected"));
+
+        LoginRequest loginRequest = new LoginRequest(email, password);
+
+        final String reqeustBody_2 = objectMapper.writeValueAsString(loginRequest);
+
+        ResultActions resultActions = mockMvc.perform(post(url)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqeustBody_2));
+
+        String token = tokenProvider.generateToken(member, Duration.ofHours(1));
+
+        // then
+        resultActions.andExpect(status().isCreated())
+                .andExpect(content().string(token));
+    }
+
+
     private ResultActions getResult(String requestBody) throws Exception {
         return mockMvc.perform(post("/signup")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(requestBody));
     }
 }
+
