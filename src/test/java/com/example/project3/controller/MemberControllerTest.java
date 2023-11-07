@@ -171,18 +171,18 @@ public class MemberControllerTest {
         final String requestBody = objectMapper.writeValueAsString(request);
 
         // when
-        ResultActions result = getResult(requestBody); // 먼저 "/signup"으로 회원가입 신청
+        getResult(requestBody); // 먼저 "/signup"으로 회원가입 신청
 
         Member member = memberRepository.findByEmail(email)
                 .orElseThrow(()->new IllegalArgumentException("Unexpected"));
 
         LoginRequest loginRequest = new LoginRequest(email, password);
 
-        final String reqeustBody_2 = objectMapper.writeValueAsString(loginRequest);
+        final String requestBody_2 = objectMapper.writeValueAsString(loginRequest);
 
         ResultActions resultActions = mockMvc.perform(post(url)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(reqeustBody_2));
+                .content(requestBody_2));
 
         String token = tokenProvider.generateToken(member, Duration.ofHours(1));
 

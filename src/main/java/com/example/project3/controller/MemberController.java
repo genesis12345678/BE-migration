@@ -5,16 +5,14 @@ import com.example.project3.dto.request.SignupRequest;
 import com.example.project3.service.MemberService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
-import java.util.HashMap;
-import java.util.Map;
 
 @RestController
 @Slf4j
@@ -37,9 +35,10 @@ public class MemberController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<String> login(@Valid @RequestBody LoginRequest request) {
+    public ResponseEntity<Void> login(@Valid @RequestBody LoginRequest request) {
         String token = memberService.login(request);
-        return new ResponseEntity<>(token, HttpStatus.CREATED);
-
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(token);
+        return ResponseEntity.status(HttpStatus.CREATED).headers(headers).build();
     }
 }

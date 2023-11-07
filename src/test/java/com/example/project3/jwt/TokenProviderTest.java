@@ -1,8 +1,8 @@
 package com.example.project3.jwt;
 
+import com.example.project3.Entity.Member;
 import com.example.project3.config.jwt.JwtProperties;
 import com.example.project3.config.jwt.TokenProvider;
-import com.example.project3.Entity.Member;
 import com.example.project3.repository.MemberRepository;
 import io.jsonwebtoken.Jwts;
 import net.datafaker.Faker;
