@@ -58,7 +58,7 @@ public class Member implements UserDetails{
 
     @Override // 권한 반환
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority("user"));
+        return List.of(new SimpleGrantedAuthority("ROLE_USER"));
     }
 
     @Override // 사용자의 고유한 값 반환

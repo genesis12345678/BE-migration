@@ -71,7 +71,7 @@ import static org.assertj.core.api.Assertions.assertThat;
                 ()->new IllegalArgumentException("Unexpected"));
 
         // when
-        String token = tokenProvider.generateToken(testMember, Duration.ofDays(14));
+        String token = tokenProvider.createAccessToken(testMember);
 
         // then
 

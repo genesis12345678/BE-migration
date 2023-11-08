@@ -8,16 +8,14 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import java.time.Duration;
-import java.util.Base64;
-import java.util.Collections;
-import java.util.Date;
-import java.util.Set;
+import java.util.*;
 
 @RequiredArgsConstructor
 @Service
@@ -26,28 +24,41 @@ public class TokenProvider {
     private final JwtProperties jwtProperties;
     private String secretKey;
 
+    public static final Duration ACCESS_TOKEN_DURATION = Duration.ofHours(1);
+    public static final Duration REFRESH_TOKEN_DURATION = Duration.ofDays(14);
+
 
     @PostConstruct
     protected void init() {
         secretKey = Base64.getEncoder().encodeToString(jwtProperties.getSecretKey().getBytes());
     }
 
-    public String generateToken(Member member, Duration expiredAt) {
-        Date now = new Date();
-        return makeToken(new Date(now.getTime() + expiredAt.toMillis()), member);
-    }
-
-    private String makeToken(Date expiry, Member member) {
-        Date now = new Date();
+    public String createAccessToken(Member member) {
+       Date now = new Date();
+       Collection<? extends GrantedAuthority> authorities = member.getAuthorities();
 
         return Jwts.builder()
-                .setHeaderParam(Header.TYPE, Header.JWT_TYPE)
-                .setIssuedAt(now)
-                .setExpiration(expiry)
-                .setSubject(member.getEmail())
-                .claim("id", member.getId())
-                .signWith(SignatureAlgorithm.HS256, secretKey)
-                .compact();
+               .setHeaderParam(Header.TYPE, Header.JWT_TYPE)
+               .setIssuedAt(now)
+               .setExpiration(new Date(now.getTime() + ACCESS_TOKEN_DURATION.toMillis()))
+               .setSubject(member.getEmail())
+               .claim("id",member.getId())
+               .claim("authorities", authorities)
+               .signWith(SignatureAlgorithm.HS256, secretKey)
+               .compact();
+    }
+
+    public String createRefreshToken(Member member) {
+       Date now = new Date();
+
+       return Jwts.builder()
+               .setHeaderParam(Header.TYPE, Header.JWT_TYPE)
+               .setIssuedAt(now)
+               .setExpiration(new Date(now.getTime() + REFRESH_TOKEN_DURATION.toMillis()))
+               .setSubject(member.getEmail())
+               .claim("id",member.getId())
+               .signWith(SignatureAlgorithm.HS256, secretKey)
+               .compact();
     }
 
     public boolean validToken(String token) {
@@ -65,7 +76,10 @@ public class TokenProvider {
         Claims claims = getClaims(token);
         Set<SimpleGrantedAuthority> authorities = Collections.singleton(new SimpleGrantedAuthority("ROLE_USER"));
 
-        return new UsernamePasswordAuthenticationToken(new User(claims.getSubject(), "", authorities), token, authorities);
+        return new UsernamePasswordAuthenticationToken(
+                new User(claims.getSubject(), "", authorities)
+                ,token
+                ,authorities);
     }
 
     public Long getMemberId(String token) {

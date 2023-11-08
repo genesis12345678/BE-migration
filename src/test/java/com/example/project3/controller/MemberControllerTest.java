@@ -5,8 +5,8 @@ import com.example.project3.config.jwt.TokenProvider;
 import com.example.project3.dto.request.LoginRequest;
 import com.example.project3.dto.request.SignupRequest;
 import com.example.project3.repository.MemberRepository;
+import com.example.project3.repository.RefreshTokenRepository;
 import com.example.project3.service.MemberService;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.datafaker.Faker;
 import org.junit.jupiter.api.AfterEach;
@@ -16,17 +16,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.http.StreamingHttpOutputMessage;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.context.WebApplicationContext;
 
-import java.time.Duration;
 import java.util.Locale;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -41,7 +43,10 @@ public class MemberControllerTest {
     private MemberRepository memberRepository;
 
     @Autowired
-    private TokenProvider tokenProvider;
+    private WebApplicationContext context;
+
+    @Autowired
+    private RefreshTokenRepository refreshTokenRepository;
 
     @Autowired
     private MockMvc mockMvc;
@@ -50,7 +55,9 @@ public class MemberControllerTest {
 
     @AfterEach
     void init() {
+        this.mockMvc = MockMvcBuilders.webAppContextSetup(context).build();
         memberRepository.deleteAll();
+        refreshTokenRepository.deleteAll();
     }
 
     @Test
@@ -173,9 +180,6 @@ public class MemberControllerTest {
         // when
         getResult(requestBody); // 먼저 "/signup"으로 회원가입 신청
 
-        Member member = memberRepository.findByEmail(email)
-                .orElseThrow(()->new IllegalArgumentException("Unexpected"));
-
         LoginRequest loginRequest = new LoginRequest(email, password);
 
         final String requestBody_2 = objectMapper.writeValueAsString(loginRequest);
@@ -184,11 +188,11 @@ public class MemberControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(requestBody_2));
 
-        String token = tokenProvider.generateToken(member, Duration.ofHours(1));
 
         // then
         resultActions.andExpect(status().isCreated())
-                .andExpect(content().string(token));
+                .andExpect(header().string("Authorization_Access_Token", is(not(""))))
+                .andExpect(header().string("Authorization_Refresh_Token", is(not(""))));
     }
 
 
