@@ -2,9 +2,11 @@ package com.example.project3.controller;
 
 import com.example.project3.dto.request.SignupRequest;
 import com.example.project3.service.MemberService;
+import com.example.project3.service.TokenService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -20,6 +22,8 @@ public class MemberController {
 
     @PostMapping("/signup")
     public ResponseEntity<?> signup(@Valid @RequestBody SignupRequest request) {
+        log.info("회원가입 요청이 들어왔습니다.");
+
         log.info("userName = {}",request.getUserName());
         log.info("email = {}",request.getEmail());
         log.info("address = {}", request.getAddress());
@@ -34,6 +38,12 @@ public class MemberController {
 
     @PostMapping("/test")
     public String test() {
+
         return "test";
+    }
+
+    @GetMapping("/user")
+    public String user() {
+        return "user이므로 url 접근 허용";
     }
 }

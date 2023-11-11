@@ -1,11 +1,9 @@
 package com.example.project3.controller;
 
-import com.example.project3.Entity.Member;
-import com.example.project3.config.jwt.TokenProvider;
+import com.example.project3.Entity.member.Member;
 import com.example.project3.dto.request.LoginRequest;
 import com.example.project3.dto.request.SignupRequest;
 import com.example.project3.repository.MemberRepository;
-import com.example.project3.repository.RefreshTokenRepository;
 import com.example.project3.service.MemberService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.datafaker.Faker;
@@ -46,9 +44,6 @@ public class MemberControllerTest {
     private WebApplicationContext context;
 
     @Autowired
-    private RefreshTokenRepository refreshTokenRepository;
-
-    @Autowired
     private MockMvc mockMvc;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -57,7 +52,6 @@ public class MemberControllerTest {
     void init() {
         this.mockMvc = MockMvcBuilders.webAppContextSetup(context).build();
         memberRepository.deleteAll();
-        refreshTokenRepository.deleteAll();
     }
 
     @Test
@@ -143,7 +137,7 @@ public class MemberControllerTest {
 
         // then
         // imageURL에 null값을 받았을 때, default로 설정한 URL이 들어갔는지 확인
-        assertThat(member.getImageURL()).isEqualTo("https://meatwiki.nii.ac.jp/confluence/images/icons/profilepics/anonymous.png");
+        assertThat(member.getImageURL()).isEqualTo(MemberService.DEFAULT_IMAGE_URL);
 
         // when
         final String requestBody = objectMapper.writeValueAsString(request);
@@ -157,7 +151,7 @@ public class MemberControllerTest {
 
 
 
-    @DisplayName("로그인 성공")
+    @DisplayName("로그인 성공, AccessToken과 RefreshToken 응답 완료")
     @Test
     void login() throws Exception {
         // given

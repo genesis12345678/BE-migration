@@ -14,7 +14,7 @@ public class LoginFailureHandler extends SimpleUrlAuthenticationFailureHandler {
         @Override
         public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response,
                                             AuthenticationException exception) throws IOException {
-
+            log.info("로그인에 실패해 LoginFailureHandler가 실행됩니다.");
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 
             // 미설정 시 한글 깨짐

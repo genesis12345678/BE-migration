@@ -1,6 +1,7 @@
 package com.example.project3.service;
 
-import com.example.project3.Entity.Member;
+import com.example.project3.Entity.member.Member;
+import com.example.project3.Entity.member.Role;
 import com.example.project3.dto.request.SignupRequest;
 import com.example.project3.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +19,7 @@ public class MemberService {
     private final MemberRepository memberRepository;
     private final BCryptPasswordEncoder passwordEncoder;
 
-    private static final String DEFAULT_IMAGE_URL = "https://meatwiki.nii.ac.jp/confluence/images/icons/profilepics/anonymous.png";
+    public static final String DEFAULT_IMAGE_URL = "https://meatwiki.nii.ac.jp/confluence/images/icons/profilepics/anonymous.png";
 
     public ResponseEntity<String> signup(SignupRequest request) {
 
@@ -38,7 +39,9 @@ public class MemberService {
                                     .nickName(request.getNickName())
                                     .gender(request.getGender())
                                     .phoneNumber(request.getPhoneNumber())
+                                    .role(Role.USER)
                                     .build());
+        log.info("회원정보가 저장되었습니다.");
 
         return new ResponseEntity<>("Signup Successful", HttpStatus.OK);
 

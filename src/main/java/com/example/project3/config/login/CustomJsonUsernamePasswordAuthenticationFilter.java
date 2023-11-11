@@ -1,6 +1,7 @@
 package com.example.project3.config.login;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -24,6 +25,7 @@ import java.util.Map;
  * Username : 회원 아이디 -> email로 설정
  * "/login" 요청 왔을 때 JSON 값을 매핑 처리하는 필터
  */
+@Slf4j
 public class CustomJsonUsernamePasswordAuthenticationFilter extends AbstractAuthenticationProcessingFilter {
 
     private static final String DEFAULT_LOGIN_REQUEST_URL = "/login"; // "/login"으로 오는 요청을 처리
@@ -65,6 +67,7 @@ public class CustomJsonUsernamePasswordAuthenticationFilter extends AbstractAuth
         if(request.getContentType() == null || !request.getContentType().equals(CONTENT_TYPE)  ) {
             throw new AuthenticationServiceException("Authentication Content-Type not supported: " + request.getContentType());
         }
+        log.info("JSON데이터로 로그인 요청 감지됨, CustomJsonUsernamePasswordAuthenticationFilter 실행");
 
         String messageBody = StreamUtils.copyToString(request.getInputStream(), StandardCharsets.UTF_8);
 
@@ -73,7 +76,14 @@ public class CustomJsonUsernamePasswordAuthenticationFilter extends AbstractAuth
         String email = usernamePasswordMap.get(USERNAME_KEY);
         String password = usernamePasswordMap.get(PASSWORD_KEY);
 
+        String prefix = password.substring(0, 3);
+        String suffix = password.substring(4).replaceAll(".","*");
+
+        log.info("로그인 요청 email : {}", email);
+        log.info("로그인 요청 password : {}", prefix + suffix);
+
         UsernamePasswordAuthenticationToken authRequest = new UsernamePasswordAuthenticationToken(email, password);//principal 과 credentials 전달
+        log.info("MemberDetailsService의 loadUserByUserName으로 보낼 Authentication 객체 : {}", authRequest);
 
         return this.getAuthenticationManager().authenticate(authRequest);
     }

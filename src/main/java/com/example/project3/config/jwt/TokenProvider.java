@@ -1,27 +1,33 @@
 package com.example.project3.config.jwt;
 
-import com.example.project3.Entity.Member;
+import com.example.project3.Entity.member.Member;
+import com.example.project3.repository.MemberRepository;
+import com.example.project3.service.MemberDetailService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Header;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import java.time.Duration;
-import java.util.*;
+import java.util.Base64;
+import java.util.Collection;
+import java.util.Date;
 
 @RequiredArgsConstructor
 @Service
+@Slf4j
 public class TokenProvider {
 
     private final JwtProperties jwtProperties;
+    private final MemberDetailService memberDetailService;
     private String secretKey;
 
     public static final Duration ACCESS_TOKEN_DURATION = Duration.ofHours(1);
@@ -30,7 +36,9 @@ public class TokenProvider {
 
     @PostConstruct
     protected void init() {
+        log.info("TokenProvider init() 메소드 시작, secretKey 초기화 시작");
         secretKey = Base64.getEncoder().encodeToString(jwtProperties.getSecretKey().getBytes());
+        log.info("TokenProvider secretKey 초기화 완료");
     }
 
     public String createAccessToken(Member member) {
@@ -73,13 +81,14 @@ public class TokenProvider {
     }
 
     public Authentication getAuthentication(String token) {
+        log.info("TokenProvider getAuthentication 실행");
         Claims claims = getClaims(token);
-        Set<SimpleGrantedAuthority> authorities = Collections.singleton(new SimpleGrantedAuthority("ROLE_USER"));
+        String email = claims.getSubject();
+        UserDetails userDetails = memberDetailService.loadUserByUsername(email);
 
-        return new UsernamePasswordAuthenticationToken(
-                new User(claims.getSubject(), "", authorities)
-                ,token
-                ,authorities);
+        Collection<? extends GrantedAuthority> authorities = userDetails.getAuthorities();
+
+        return new UsernamePasswordAuthenticationToken(userDetails, "", authorities);
     }
 
     public Long getMemberId(String token) {

@@ -6,7 +6,6 @@ import com.example.project3.config.login.LoginFailureHandler;
 import com.example.project3.config.login.LoginSuccessHandler;
 import com.example.project3.repository.MemberRepository;
 import com.example.project3.service.MemberDetailService;
-import com.example.project3.service.RefreshTokenService;
 import com.example.project3.service.TokenService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -32,7 +31,6 @@ public class SecurityConfig{
     private final TokenProvider tokenProvider;
     private final ObjectMapper objectMapper;
     private final TokenService tokenService;
-    private final RefreshTokenService refreshTokenService;
     private final MemberRepository memberRepository;
 
 
@@ -61,11 +59,12 @@ public class SecurityConfig{
 
                     .antMatchers( "/signup", "/login").permitAll()
                     .antMatchers("/test").authenticated()
+                    .antMatchers("/user").hasRole("USER")
 
                     .and()
 
                     .addFilterBefore(customJsonUsernamePasswordAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
-                    .addFilterBefore(tokenAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
+                    .addFilterBefore(jwtAuthenticationProcessingFilter(), UsernamePasswordAuthenticationFilter.class)
 
                     .build();
     }
@@ -95,13 +94,13 @@ public class SecurityConfig{
     }
 
     @Bean
-    public TokenAuthenticationFilter tokenAuthenticationFilter() {
-        return new TokenAuthenticationFilter(tokenProvider);
+    public JwtAuthenticationProcessingFilter jwtAuthenticationProcessingFilter() {
+        return new JwtAuthenticationProcessingFilter(tokenService, memberRepository, tokenProvider);
     }
 
     @Bean
     public LoginSuccessHandler loginSuccessHandler() {
-        return new LoginSuccessHandler(tokenService, refreshTokenService, memberRepository);
+        return new LoginSuccessHandler(tokenService, memberRepository);
     }
 
     @Bean

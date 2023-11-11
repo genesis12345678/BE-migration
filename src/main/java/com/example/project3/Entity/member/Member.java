@@ -1,13 +1,17 @@
-package com.example.project3.Entity;
+package com.example.project3.Entity.member;
 
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import javax.persistence.*;
 import java.util.Collection;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -42,9 +46,16 @@ public class Member implements UserDetails{
     @Column(length = 11)
     private String phoneNumber;
 
+    @Column
+    @Enumerated(EnumType.STRING)
+    private Role role;
+
+    private String refreshToken;
+
     @Builder
     public Member(String name, String email, String password, String address,
-                  String imageURL, String nickName, String gender, String phoneNumber) {
+                  String imageURL, String nickName, String gender, String phoneNumber,
+                  Role role) {
         this.name = name;
         this.email = email;
         this.password = password;
@@ -53,12 +64,18 @@ public class Member implements UserDetails{
         this.nickName = nickName;
         this.gender = gender;
         this.phoneNumber = phoneNumber;
+        this.role = role;
     }
 
-
+    public void updateRefreshToken(String refreshToken) {
+        this.refreshToken = refreshToken;
+    }
     @Override // 권한 반환
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority("ROLE_USER"));
+
+        Set<GrantedAuthority> roles = new HashSet<>();
+        roles.add(new SimpleGrantedAuthority(role.getValue()));
+        return roles;
     }
 
     @Override // 사용자의 고유한 값 반환
