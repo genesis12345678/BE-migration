@@ -1,11 +1,12 @@
 package com.example.project3.controller;
 
 import com.example.project3.Entity.member.Member;
-import com.example.project3.dto.request.LoginRequest;
 import com.example.project3.dto.request.SignupRequest;
 import com.example.project3.repository.MemberRepository;
 import com.example.project3.service.MemberService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import net.datafaker.Faker;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
@@ -194,6 +195,13 @@ public class MemberControllerTest {
         return mockMvc.perform(post("/signup")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(requestBody));
+    }
+
+    @AllArgsConstructor
+    @Getter
+    private class LoginRequest {
+        private String email;
+        private String password;
     }
 }
 
