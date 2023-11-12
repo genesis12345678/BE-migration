@@ -17,7 +17,7 @@ import java.util.Set;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
 @Entity
-public class Member implements UserDetails{
+public class Member{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -70,36 +70,36 @@ public class Member implements UserDetails{
     public void updateRefreshToken(String refreshToken) {
         this.refreshToken = refreshToken;
     }
-    @Override // 권한 반환
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-
-        Set<GrantedAuthority> roles = new HashSet<>();
-        roles.add(new SimpleGrantedAuthority(role.getValue()));
-        return roles;
-    }
-
-    @Override // 사용자의 고유한 값 반환
-    public String getUsername() {
-        return email;
-    }
-
-    @Override // 계정 만료 여부 반환
-    public boolean isAccountNonExpired() {
-        return true;
-    }
-
-    @Override // 계정 잠금 여부 반환
-    public boolean isAccountNonLocked() {
-        return true;
-    }
-
-    @Override // 패스워드 만료 여부 반환
-    public boolean isCredentialsNonExpired() {
-        return true;
-    }
-
-    @Override // 계정 사용 가능 여부 반환
-    public boolean isEnabled() {
-        return true;
-    }
+//    @Override // 권한 반환
+//    public Collection<? extends GrantedAuthority> getAuthorities() {
+//
+//        Set<GrantedAuthority> roles = new HashSet<>();
+//        roles.add(new SimpleGrantedAuthority(role.getValue()));
+//        return roles;
+//    }
+//
+//    @Override // 사용자의 고유한 값 반환
+//    public String getUsername() {
+//        return email;
+//    }
+//
+//    @Override // 계정 만료 여부 반환
+//    public boolean isAccountNonExpired() {
+//        return true;
+//    }
+//
+//    @Override // 계정 잠금 여부 반환
+//    public boolean isAccountNonLocked() {
+//        return true;
+//    }
+//
+//    @Override // 패스워드 만료 여부 반환
+//    public boolean isCredentialsNonExpired() {
+//        return true;
+//    }
+//
+//    @Override // 계정 사용 가능 여부 반환
+//    public boolean isEnabled() {
+//        return true;
+//    }
 }

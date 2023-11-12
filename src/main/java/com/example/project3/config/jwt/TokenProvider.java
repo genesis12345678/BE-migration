@@ -1,7 +1,6 @@
 package com.example.project3.config.jwt;
 
 import com.example.project3.Entity.member.Member;
-import com.example.project3.repository.MemberRepository;
 import com.example.project3.service.MemberDetailService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Header;
@@ -43,7 +42,6 @@ public class TokenProvider {
 
     public String createAccessToken(Member member) {
        Date now = new Date();
-       Collection<? extends GrantedAuthority> authorities = member.getAuthorities();
 
         return Jwts.builder()
                .setHeaderParam(Header.TYPE, Header.JWT_TYPE)
@@ -51,7 +49,6 @@ public class TokenProvider {
                .setExpiration(new Date(now.getTime() + ACCESS_TOKEN_DURATION.toMillis()))
                .setSubject(member.getEmail())
                .claim("id",member.getId())
-               .claim("authorities", authorities)
                .signWith(SignatureAlgorithm.HS256, secretKey)
                .compact();
     }
