@@ -52,7 +52,7 @@ import static org.assertj.core.api.Assertions.assertThat;
         String address = faker.address().fullAddress();
         String imageURL = faker.internet().avatar();
         String nickName = faker.name().prefix() + faker.name().firstName();
-        String phoneNumber = "010" + faker.numerify("########");
+        String message = faker.lorem().sentence();
         String gender = faker.options().option("MALE", "FEMALE");
 
        Member testMember = Member.builder()
@@ -61,7 +61,7 @@ import static org.assertj.core.api.Assertions.assertThat;
                .address(address)
                .imageURL(imageURL)
                .nickName(nickName)
-               .phoneNumber(phoneNumber)
+               .message(message)
                .gender(gender)
                .password("testPassword13@")
                .role(Role.USER)
@@ -120,7 +120,7 @@ import static org.assertj.core.api.Assertions.assertThat;
         String address = faker.address().fullAddress();
         String imageURL = faker.internet().avatar();
         String nickName = faker.name().prefix() + faker.name().firstName();
-        String phoneNumber = "010" + faker.numerify("########");
+        String message = faker.lorem().sentence();
         String gender = faker.options().option("MALE", "FEMALE");
 
         Member testMember = Member.builder()
@@ -129,7 +129,7 @@ import static org.assertj.core.api.Assertions.assertThat;
                 .address(address)
                 .imageURL(imageURL)
                 .nickName(nickName)
-                .phoneNumber(phoneNumber)
+                .message(message)
                 .gender(gender)
                 .password("testPassword13@")
                 .role(Role.USER)

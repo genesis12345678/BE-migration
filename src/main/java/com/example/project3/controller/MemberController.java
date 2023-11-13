@@ -2,7 +2,6 @@ package com.example.project3.controller;
 
 import com.example.project3.dto.request.SignupRequest;
 import com.example.project3.service.MemberService;
-import com.example.project3.service.TokenService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -29,7 +28,7 @@ public class MemberController {
         log.info("address = {}", request.getAddress());
         log.info("imageURL = {}", request.getImageURL());
         log.info("nickName = {}", request.getNickName());
-        log.info("phoneNumber = {}", request.getPhoneNumber());
+        log.info("message = {}", request.getMessage());
         log.info("gender = {}", request.getGender());
 
         return memberService.signup(request);
@@ -39,11 +38,7 @@ public class MemberController {
     @PostMapping("/test")
     public String test() {
 
-        return "test";
+        return "인증 객체 접근 허용";
     }
 
-    @GetMapping("/user")
-    public String user() {
-        return "user이므로 url 접근 허용";
-    }
 }

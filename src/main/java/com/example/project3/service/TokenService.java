@@ -19,6 +19,7 @@ public class TokenService {
 
     private final static String ACCESS_TOKEN_HEADER = "Authorization_Access_Token";
     private final static String REFRESH_TOKEN_HEADER = "Authorization_Refresh_Token";
+    private final static String BEARER = "Bearer ";
 
     // AccessToken이 만료되었을 때 새로운 AccessToken을 발급
     public void createNewAccessToken(String refreshToken, HttpServletResponse response){
@@ -67,9 +68,18 @@ public class TokenService {
     public void sendAccessAndRefreshToken(HttpServletResponse response, String accessToken, String refreshToken) {
         response.setStatus(HttpServletResponse.SC_CREATED);
 
-        response.setHeader(ACCESS_TOKEN_HEADER, accessToken);
-        response.setHeader(REFRESH_TOKEN_HEADER, refreshToken);
+        response.setHeader(ACCESS_TOKEN_HEADER, BEARER + accessToken);
+        response.setHeader(REFRESH_TOKEN_HEADER, BEARER + refreshToken);
 
         log.info("Access Token, Refresh Token 헤더 설정 완료");
+    }
+
+    public void updateRefreshToken(String email, String refreshToken) {
+        memberRepository.findByEmail(email)
+                .ifPresentOrElse(
+                        member -> member.updateRefreshToken(refreshToken),
+                        () -> new Exception("Cannot Found Member")
+                );
+
     }
 }

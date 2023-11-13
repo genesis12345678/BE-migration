@@ -1,6 +1,7 @@
 package com.example.project3.config.jwt;
 
 import com.example.project3.Entity.member.Member;
+import com.example.project3.repository.MemberRepository;
 import com.example.project3.service.MemberDetailService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Header;
@@ -26,6 +27,7 @@ import java.util.Date;
 public class TokenProvider {
 
     private final JwtProperties jwtProperties;
+    private final MemberRepository memberRepository;
     private final MemberDetailService memberDetailService;
     private String secretKey;
 
@@ -53,6 +55,7 @@ public class TokenProvider {
                .compact();
     }
 
+    // TODO : 리프레시토큰에다가 member의 email과 id를 꼭 넣어야 할지 고려해봐야함.
     public String createRefreshToken(Member member) {
        Date now = new Date();
 
@@ -81,6 +84,7 @@ public class TokenProvider {
         log.info("TokenProvider getAuthentication 실행");
         Claims claims = getClaims(token);
         String email = claims.getSubject();
+
         UserDetails userDetails = memberDetailService.loadUserByUsername(email);
 
         Collection<? extends GrantedAuthority> authorities = userDetails.getAuthorities();

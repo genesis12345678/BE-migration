@@ -65,11 +65,11 @@ public class MemberControllerTest {
         String address = faker.address().fullAddress();
         String imageURL = faker.internet().avatar();
         String nickName = faker.name().prefix() + faker.name().firstName();
-        String phoneNumber = "010" + faker.numerify("########");
+        String message = faker.lorem().sentence();
         String gender = faker.options().option("MALE", "FEMALE");
 
         SignupRequest request = new SignupRequest(username, email, "password12@",
-                address, imageURL, nickName, gender, phoneNumber);
+                address, imageURL, nickName, gender, message);
 
         final String requestBody = objectMapper.writeValueAsString(request);
 
@@ -96,11 +96,11 @@ public class MemberControllerTest {
         System.out.println("password = " + password);
         String address = faker.address().fullAddress();
         String nickName = faker.name().prefix() + faker.name().firstName();
-        String phoneNumber = "02" + faker.numerify("########");
+        String message = faker.lorem().sentence();
         String gender = faker.options().option("MALE", "FEMALE");
 
         SignupRequest request = new SignupRequest(username, email, password,
-                address, null, nickName, gender, phoneNumber);
+                address, null, nickName, gender, message);
 
         final String requestBody = objectMapper.writeValueAsString(request);
 
@@ -111,8 +111,7 @@ public class MemberControllerTest {
         // then
         result.andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.email").value("Invalid Email"))
-                .andExpect(jsonPath("$.password").value("8 ~ 20자, 최소 한개의 특수문자와 숫자, 영문 알파벳을 포함해야 함."))
-                .andExpect(jsonPath("$.phoneNumber").value("Invalid phone number"));
+                .andExpect(jsonPath("$.password").value("8 ~ 20자, 최소 한개의 특수문자와 숫자, 영문 알파벳을 포함해야 함."));
     }
 
     @Test
@@ -125,11 +124,11 @@ public class MemberControllerTest {
         System.out.println("password = " + password);
         String address = faker.address().fullAddress();
         String nickName = faker.name().prefix() + faker.name().firstName();
-        String phoneNumber = "010" + faker.numerify("########");
+        String message = faker.lorem().sentence();
         String gender = faker.options().option("MALE", "FEMALE");
 
         SignupRequest request = new SignupRequest(username, email, password,
-                address, null, nickName, gender, phoneNumber);
+                address, null, nickName, gender, message);
 
         // when
         memberService.signup(request);
@@ -163,12 +162,12 @@ public class MemberControllerTest {
         String address = faker.address().fullAddress();
         String imageURL = faker.internet().avatar();
         String nickName = faker.name().prefix() + faker.name().firstName();
-        String phoneNumber = "010" + faker.numerify("########");
+        String message = faker.lorem().sentence();
         String gender = faker.options().option("MALE", "FEMALE");
         String password = "testPassword13@";
 
         SignupRequest request = new SignupRequest(username, email, password,
-                address, imageURL, nickName, gender, phoneNumber);
+                address, imageURL, nickName, gender, message);
 
         final String requestBody = objectMapper.writeValueAsString(request);
 

@@ -68,7 +68,7 @@ class TokenApiControllerTest {
         String address = faker.address().fullAddress();
         String imageURL = faker.internet().avatar();
         String nickName = faker.name().prefix() + faker.name().firstName();
-        String phoneNumber = "010" + faker.numerify("########");
+        String message = faker.lorem().sentence();
         String gender = faker.options().option("MALE", "FEMALE");
 
         memberRepository.save(Member.builder()
@@ -77,7 +77,7 @@ class TokenApiControllerTest {
                 .address(address)
                 .imageURL(imageURL)
                 .nickName(nickName)
-                .phoneNumber(phoneNumber)
+                .message(message)
                 .gender(gender)
                 .password("testPassword13@")
                 .role(Role.USER)

@@ -38,7 +38,7 @@ public class MemberService {
                                     .imageURL(imageURL)
                                     .nickName(request.getNickName())
                                     .gender(request.getGender())
-                                    .phoneNumber(request.getPhoneNumber())
+                                    .message(request.getMessage())
                                     .role(Role.USER)
                                     .build());
         log.info("회원정보가 저장되었습니다.");

@@ -37,6 +37,8 @@ dependencies {
 
     implementation 'org.springframework.boot:spring-boot-starter-security'
 
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+
     // 테스트코드 관련
     implementation 'net.datafaker:datafaker:1.5.0'
     testImplementation 'org.hamcrest:hamcrest-all:1.3'

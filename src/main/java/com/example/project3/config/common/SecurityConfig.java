@@ -1,10 +1,9 @@
 package com.example.project3.config.common;
 
 import com.example.project3.config.jwt.TokenProvider;
-import com.example.project3.config.login.CustomJsonUsernamePasswordAuthenticationFilter;
-import com.example.project3.config.login.LoginFailureHandler;
-import com.example.project3.config.login.LoginSuccessHandler;
+import com.example.project3.config.login.*;
 import com.example.project3.repository.MemberRepository;
+import com.example.project3.service.CustomOAuth2UserService;
 import com.example.project3.service.MemberDetailService;
 import com.example.project3.service.TokenService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -21,6 +20,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.logout.LogoutFilter;
 
 @Configuration
 @EnableWebSecurity(debug = true)
@@ -32,6 +32,9 @@ public class SecurityConfig{
     private final ObjectMapper objectMapper;
     private final TokenService tokenService;
     private final MemberRepository memberRepository;
+    private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
+    private final OAuth2LoginFailureHandler oAuth2LoginFailureHandler;
+    private final CustomOAuth2UserService customOAuth2UserService;
 
 
     @Bean
@@ -43,7 +46,7 @@ public class SecurityConfig{
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        return http
+                    http
                     .csrf().disable()
                     .cors().and()
 
@@ -56,17 +59,21 @@ public class SecurityConfig{
                     .and()
 
                     .authorizeRequests()
-
+                    .antMatchers("/","/css/**","/images/**","/js/**","/favicon.ico").permitAll()
                     .antMatchers( "/signup", "/login").permitAll()
                     .antMatchers("/test").authenticated()
-                    .antMatchers("/user").hasRole("USER")
 
                     .and()
 
-                    .addFilterBefore(customJsonUsernamePasswordAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
-                    .addFilterBefore(jwtAuthenticationProcessingFilter(), UsernamePasswordAuthenticationFilter.class)
+                    .oauth2Login()
+                    .successHandler(oAuth2LoginSuccessHandler)
+                    .failureHandler(oAuth2LoginFailureHandler)
+                    .userInfoEndpoint().userService(customOAuth2UserService);
 
-                    .build();
+                http.addFilterAfter(customJsonUsernamePasswordAuthenticationFilter(), LogoutFilter.class);
+                http.addFilterBefore(jwtAuthenticationProcessingFilter(), UsernamePasswordAuthenticationFilter.class);
+
+                   return  http.build();
     }
 
 
@@ -95,7 +102,7 @@ public class SecurityConfig{
 
     @Bean
     public JwtAuthenticationProcessingFilter jwtAuthenticationProcessingFilter() {
-        return new JwtAuthenticationProcessingFilter(tokenService, memberRepository, tokenProvider);
+        return new JwtAuthenticationProcessingFilter(tokenService, tokenProvider);
     }
 
     @Bean
