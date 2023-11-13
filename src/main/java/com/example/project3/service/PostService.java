@@ -1,9 +1,6 @@
 package com.example.project3.service;
 
-import com.example.project3.Entity.Hashtag;
-import com.example.project3.Entity.Member;
-import com.example.project3.Entity.Post;
-import com.example.project3.Entity.PostHashtag;
+import com.example.project3.Entity.*;
 import com.example.project3.dto.request.PostRequestDto;
 import com.example.project3.dto.response.PostResponseDto;
 import com.example.project3.repository.HashtagRepository;
@@ -18,7 +15,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Service
@@ -27,6 +23,7 @@ public class PostService {
     private final PostRepository postRepository;
     private final PostHashtagRepository postHashtagRepository;
     private final HashtagRepository hashtagRepository;
+    private final S3Uploader s3Uploader;
 
     @Transactional
     public PostResponseDto createPost(String username, PostRequestDto requestDto) {
@@ -45,8 +42,10 @@ public class PostService {
         System.out.println("savedPost 저장 후 " + savedPost);
 
         // MediaFiles 처리
+        //List<String> mediaUrls = saveMediaFiles(requestDto.getMediaFiles());
         List<String> mediaUrls = saveMediaFiles(requestDto.getMediaFiles(), savedPost);
         List<String> hashtagNames = saveHashtagNames(requestDto.getHashtags(), savedPost);
+
 
         // PostResponseDto 생성
         PostResponseDto responseDto = PostResponseDto.builder()
@@ -68,16 +67,18 @@ public class PostService {
     }
 
     private List<String> saveMediaFiles(List<MultipartFile> mediaFiles, Post post) {
-        if (mediaFiles == null || post == null) {
+        if (mediaFiles == null) {
             return Collections.emptyList();
         }
 
-        // 여기에서 파일을 저장하고 저장된 파일의 URL을 추출하여 List<String>으로 반환
-        // 실제로는 서버에 파일을 저장하고 해당 파일의 URL을 생성해야 합니다.
-        // 이 예시에서는 파일 저장을 가정하지 않고, 파일의 원래 이름을 URL로 사용합니다.
-        return mediaFiles.stream()
-                .map(MultipartFile::getOriginalFilename)
-                .collect(Collectors.toList());
+        List<String> mediaUrls = s3Uploader.upload(mediaFiles); // 수정
+        // 각 URL을 Post 엔티티에 추가
+        for (String mediaUrl : mediaUrls) {
+            MediaFile mediaFile = new MediaFile(mediaUrl, post);
+            post.addMediaFile(mediaFile);
+        }
+
+        return mediaUrls;
     }
 
     private List<String> saveHashtagNames(List<String> hashtagNames, Post post) {

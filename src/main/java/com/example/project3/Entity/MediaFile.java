@@ -1,9 +1,6 @@
 package com.example.project3.Entity;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import javax.persistence.*;
 
@@ -12,6 +9,7 @@ import javax.persistence.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
+@Setter
 public class MediaFile {
 
     @Id
@@ -29,6 +27,8 @@ public class MediaFile {
     @Column(name = "file_type")
     private FileType fileType;
 
-    // 다른 필드 (예: 파일 크기, 파일 이름, 업로드 일자 등)를 추가할 수 있습니다.
-
+    public MediaFile(String fileUrl, Post post) {
+        this.fileUrl = fileUrl;
+        this.post = post;
+    }
 }

@@ -24,16 +24,16 @@ public class Post {
     private Long postId;
     private String postContent;
     //위치
-    @Column(nullable = false)
+    @Column
     private String postLocation;
 
-    //위도
-    @Column(nullable = false)
-    private double latitude;
-
-    //경도
-    @Column(nullable = false)
-    private double longitude;
+//    //위도
+//    @Column
+//    private double latitude;
+//
+//    //경도
+//    @Column
+//    private double longitude;
 
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL)
@@ -55,16 +55,14 @@ public class Post {
     @PrePersist // 디비에 INSERT 되기 직전에 실행
     public void createAt() {
         this.createdAt = LocalDateTime.now();
+        this.medias = new ArrayList<>(); // 이 부분 추가
     }
 
-    public static Post fromDto(PostRequestDto requestDto, Member member) {
-        return Post.builder()
-                .postLocation(requestDto.getLocation())
-                .postContent(requestDto.getContent())
-                //.hashtags(createHashtags(requestDto.getHashtags(), post)) // 추가: 해시태그 설정
-                .member(member)
-                .build();
 
+
+    public void addMediaFile(MediaFile mediaFile) {
+        this.medias.add(mediaFile);
+        mediaFile.setPost(this);
     }
 
     // 추가: 해시태그 생성 및 설정
@@ -73,4 +71,6 @@ public class Post {
                 .map(hashtagName -> new PostHashtag(post, new Hashtag(hashtagName)))
                 .collect(Collectors.toList());
     }
+
+
 }

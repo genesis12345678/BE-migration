@@ -9,10 +9,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
 @RequiredArgsConstructor
 @RequestMapping("/api")
 @RestController
@@ -22,7 +20,7 @@ public class PostController {
     @PostMapping("/post")
     public ResponseEntity<PostResponseDto> createPost(
             @AuthenticationPrincipal UserDetails userDetails,
-            @RequestBody PostRequestDto postRequestDto) {
+            PostRequestDto postRequestDto) {
 
         PostResponseDto postResponseDto = postService.createPost(userDetails.getUsername(), postRequestDto);
 
