@@ -1,13 +1,11 @@
 package com.example.project3.controller;
 
-import com.example.project3.dto.request.LoginRequest;
 import com.example.project3.dto.request.SignupRequest;
 import com.example.project3.service.MemberService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -23,22 +21,24 @@ public class MemberController {
 
     @PostMapping("/signup")
     public ResponseEntity<?> signup(@Valid @RequestBody SignupRequest request) {
+        log.info("회원가입 요청이 들어왔습니다.");
+
         log.info("userName = {}",request.getUserName());
         log.info("email = {}",request.getEmail());
         log.info("address = {}", request.getAddress());
         log.info("imageURL = {}", request.getImageURL());
         log.info("nickName = {}", request.getNickName());
-        log.info("phoneNumber = {}", request.getPhoneNumber());
+        log.info("message = {}", request.getMessage());
         log.info("gender = {}", request.getGender());
 
         return memberService.signup(request);
     }
 
-    @PostMapping("/login")
-    public ResponseEntity<Void> login(@Valid @RequestBody LoginRequest request) {
-        String token = memberService.login(request);
-        HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(token);
-        return ResponseEntity.status(HttpStatus.CREATED).headers(headers).build();
+
+    @PostMapping("/test")
+    public String test() {
+
+        return "인증 객체 접근 허용";
     }
+
 }

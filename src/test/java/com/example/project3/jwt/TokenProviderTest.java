@@ -1,6 +1,7 @@
 package com.example.project3.jwt;
 
-import com.example.project3.Entity.Member;
+import com.example.project3.Entity.member.Member;
+import com.example.project3.Entity.member.Role;
 import com.example.project3.config.jwt.JwtProperties;
 import com.example.project3.config.jwt.TokenProvider;
 import com.example.project3.repository.MemberRepository;
@@ -51,7 +52,7 @@ import static org.assertj.core.api.Assertions.assertThat;
         String address = faker.address().fullAddress();
         String imageURL = faker.internet().avatar();
         String nickName = faker.name().prefix() + faker.name().firstName();
-        String phoneNumber = "010" + faker.numerify("########");
+        String message = faker.lorem().sentence();
         String gender = faker.options().option("MALE", "FEMALE");
 
        Member testMember = Member.builder()
@@ -60,9 +61,10 @@ import static org.assertj.core.api.Assertions.assertThat;
                .address(address)
                .imageURL(imageURL)
                .nickName(nickName)
-               .phoneNumber(phoneNumber)
+               .message(message)
                .gender(gender)
                .password("testPassword13@")
+               .role(Role.USER)
                .build();
 
        memberRepository.save(testMember);
@@ -71,7 +73,7 @@ import static org.assertj.core.api.Assertions.assertThat;
                 ()->new IllegalArgumentException("Unexpected"));
 
         // when
-        String token = tokenProvider.generateToken(testMember, Duration.ofDays(14));
+        String token = tokenProvider.createAccessToken(testMember);
 
         // then
 
@@ -113,11 +115,32 @@ import static org.assertj.core.api.Assertions.assertThat;
     @Test
     void getAuthentication() {
         // given
+        String username = faker.name().lastName() + faker.name().firstName();
         String email = faker.internet().emailAddress();
+        String address = faker.address().fullAddress();
+        String imageURL = faker.internet().avatar();
+        String nickName = faker.name().prefix() + faker.name().firstName();
+        String message = faker.lorem().sentence();
+        String gender = faker.options().option("MALE", "FEMALE");
+
+        Member testMember = Member.builder()
+                .name(username)
+                .email(email)
+                .address(address)
+                .imageURL(imageURL)
+                .nickName(nickName)
+                .message(message)
+                .gender(gender)
+                .password("testPassword13@")
+                .role(Role.USER)
+                .build();
+
+        memberRepository.save(testMember);
         String token = JwtFactory.builder()
                 .subject(email)
                 .build()
                 .createToken(jwtProperties);
+        System.out.println("token = " + token);
         // when
         Authentication authentication = tokenProvider.getAuthentication(token);
         Object principal = authentication.getPrincipal();

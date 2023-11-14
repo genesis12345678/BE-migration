@@ -1,4 +1,4 @@
-package com.example.project3.config;
+package com.example.project3.config.common;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

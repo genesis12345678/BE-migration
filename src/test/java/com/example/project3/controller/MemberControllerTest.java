@@ -1,13 +1,12 @@
 package com.example.project3.controller;
 
-import com.example.project3.Entity.Member;
-import com.example.project3.config.jwt.TokenProvider;
-import com.example.project3.dto.request.LoginRequest;
+import com.example.project3.Entity.member.Member;
 import com.example.project3.dto.request.SignupRequest;
 import com.example.project3.repository.MemberRepository;
 import com.example.project3.service.MemberService;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import net.datafaker.Faker;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
@@ -16,17 +15,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.http.StreamingHttpOutputMessage;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.context.WebApplicationContext;
 
-import java.time.Duration;
 import java.util.Locale;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -41,7 +42,7 @@ public class MemberControllerTest {
     private MemberRepository memberRepository;
 
     @Autowired
-    private TokenProvider tokenProvider;
+    private WebApplicationContext context;
 
     @Autowired
     private MockMvc mockMvc;
@@ -50,6 +51,7 @@ public class MemberControllerTest {
 
     @AfterEach
     void init() {
+        this.mockMvc = MockMvcBuilders.webAppContextSetup(context).build();
         memberRepository.deleteAll();
     }
 
@@ -63,11 +65,11 @@ public class MemberControllerTest {
         String address = faker.address().fullAddress();
         String imageURL = faker.internet().avatar();
         String nickName = faker.name().prefix() + faker.name().firstName();
-        String phoneNumber = "010" + faker.numerify("########");
+        String message = faker.lorem().sentence();
         String gender = faker.options().option("MALE", "FEMALE");
 
         SignupRequest request = new SignupRequest(username, email, "password12@",
-                address, imageURL, nickName, gender, phoneNumber);
+                address, imageURL, nickName, gender, message);
 
         final String requestBody = objectMapper.writeValueAsString(request);
 
@@ -94,11 +96,11 @@ public class MemberControllerTest {
         System.out.println("password = " + password);
         String address = faker.address().fullAddress();
         String nickName = faker.name().prefix() + faker.name().firstName();
-        String phoneNumber = "02" + faker.numerify("########");
+        String message = faker.lorem().sentence();
         String gender = faker.options().option("MALE", "FEMALE");
 
         SignupRequest request = new SignupRequest(username, email, password,
-                address, null, nickName, gender, phoneNumber);
+                address, null, nickName, gender, message);
 
         final String requestBody = objectMapper.writeValueAsString(request);
 
@@ -109,8 +111,7 @@ public class MemberControllerTest {
         // then
         result.andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.email").value("Invalid Email"))
-                .andExpect(jsonPath("$.password").value("8 ~ 20자, 최소 한개의 특수문자와 숫자, 영문 알파벳을 포함해야 함."))
-                .andExpect(jsonPath("$.phoneNumber").value("Invalid phone number"));
+                .andExpect(jsonPath("$.password").value("8 ~ 20자, 최소 한개의 특수문자와 숫자, 영문 알파벳을 포함해야 함."));
     }
 
     @Test
@@ -123,11 +124,11 @@ public class MemberControllerTest {
         System.out.println("password = " + password);
         String address = faker.address().fullAddress();
         String nickName = faker.name().prefix() + faker.name().firstName();
-        String phoneNumber = "010" + faker.numerify("########");
+        String message = faker.lorem().sentence();
         String gender = faker.options().option("MALE", "FEMALE");
 
         SignupRequest request = new SignupRequest(username, email, password,
-                address, null, nickName, gender, phoneNumber);
+                address, null, nickName, gender, message);
 
         // when
         memberService.signup(request);
@@ -136,7 +137,7 @@ public class MemberControllerTest {
 
         // then
         // imageURL에 null값을 받았을 때, default로 설정한 URL이 들어갔는지 확인
-        assertThat(member.getImageURL()).isEqualTo("https://meatwiki.nii.ac.jp/confluence/images/icons/profilepics/anonymous.png");
+        assertThat(member.getImageURL()).isEqualTo(MemberService.DEFAULT_IMAGE_URL);
 
         // when
         final String requestBody = objectMapper.writeValueAsString(request);
@@ -150,7 +151,7 @@ public class MemberControllerTest {
 
 
 
-    @DisplayName("로그인 성공")
+    @DisplayName("로그인 성공, AccessToken과 RefreshToken 응답 완료")
     @Test
     void login() throws Exception {
         // given
@@ -161,20 +162,17 @@ public class MemberControllerTest {
         String address = faker.address().fullAddress();
         String imageURL = faker.internet().avatar();
         String nickName = faker.name().prefix() + faker.name().firstName();
-        String phoneNumber = "010" + faker.numerify("########");
+        String message = faker.lorem().sentence();
         String gender = faker.options().option("MALE", "FEMALE");
         String password = "testPassword13@";
 
         SignupRequest request = new SignupRequest(username, email, password,
-                address, imageURL, nickName, gender, phoneNumber);
+                address, imageURL, nickName, gender, message);
 
         final String requestBody = objectMapper.writeValueAsString(request);
 
         // when
         getResult(requestBody); // 먼저 "/signup"으로 회원가입 신청
-
-        Member member = memberRepository.findByEmail(email)
-                .orElseThrow(()->new IllegalArgumentException("Unexpected"));
 
         LoginRequest loginRequest = new LoginRequest(email, password);
 
@@ -184,11 +182,11 @@ public class MemberControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(requestBody_2));
 
-        String token = tokenProvider.generateToken(member, Duration.ofHours(1));
 
         // then
         resultActions.andExpect(status().isCreated())
-                .andExpect(content().string(token));
+                .andExpect(header().string("Authorization_Access_Token", is(not(""))))
+                .andExpect(header().string("Authorization_Refresh_Token", is(not(""))));
     }
 
 
@@ -196,6 +194,13 @@ public class MemberControllerTest {
         return mockMvc.perform(post("/signup")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(requestBody));
+    }
+
+    @AllArgsConstructor
+    @Getter
+    private class LoginRequest {
+        private String email;
+        private String password;
     }
 }
 
