@@ -1,9 +1,6 @@
 package com.example.project3.dto.request;
 
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
@@ -36,6 +33,8 @@ public class SignupRequest {
     @Pattern(regexp = "^(MALE|FEMALE)?$", message = "MALE or FEMALE")
     private String gender;
 
-    @Pattern(regexp = "^010\\d{8}$", message = "Invalid phone number") // 010xxxxxxxx 만 허용
-    private String phoneNumber;
+    private String message;
+
+//    @Pattern(regexp = "^010\\d{8}$", message = "Invalid phone number") // 010xxxxxxxx 만 허용
+//    private String phoneNumber;
 }

@@ -1,53 +1,72 @@
 package com.example.project3.config.jwt;
 
-import com.example.project3.Entity.Member;
+import com.example.project3.Entity.member.Member;
+import com.example.project3.repository.MemberRepository;
+import com.example.project3.service.MemberDetailService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Header;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import java.time.Duration;
 import java.util.Base64;
-import java.util.Collections;
+import java.util.Collection;
 import java.util.Date;
-import java.util.Set;
 
 @RequiredArgsConstructor
 @Service
+@Slf4j
 public class TokenProvider {
 
     private final JwtProperties jwtProperties;
+    private final MemberRepository memberRepository;
+    private final MemberDetailService memberDetailService;
     private String secretKey;
+
+    public static final Duration ACCESS_TOKEN_DURATION = Duration.ofHours(1);
+    public static final Duration REFRESH_TOKEN_DURATION = Duration.ofDays(14);
 
 
     @PostConstruct
     protected void init() {
+        log.info("TokenProvider init() 메소드 시작, secretKey 초기화 시작");
         secretKey = Base64.getEncoder().encodeToString(jwtProperties.getSecretKey().getBytes());
+        log.info("TokenProvider secretKey 초기화 완료");
     }
 
-    public String generateToken(Member member, Duration expiredAt) {
-        Date now = new Date();
-        return makeToken(new Date(now.getTime() + expiredAt.toMillis()), member);
-    }
-
-    private String makeToken(Date expiry, Member member) {
-        Date now = new Date();
+    public String createAccessToken(Member member) {
+       Date now = new Date();
 
         return Jwts.builder()
-                .setHeaderParam(Header.TYPE, Header.JWT_TYPE)
-                .setIssuedAt(now)
-                .setExpiration(expiry)
-                .setSubject(member.getEmail())
-                .claim("id", member.getId())
-                .signWith(SignatureAlgorithm.HS256, secretKey)
-                .compact();
+               .setHeaderParam(Header.TYPE, Header.JWT_TYPE)
+               .setIssuedAt(now)
+               .setExpiration(new Date(now.getTime() + ACCESS_TOKEN_DURATION.toMillis()))
+               .setSubject(member.getEmail())
+               .claim("id",member.getId())
+               .signWith(SignatureAlgorithm.HS256, secretKey)
+               .compact();
+    }
+
+    // TODO : 리프레시토큰에다가 member의 email과 id를 꼭 넣어야 할지 고려해봐야함.
+    public String createRefreshToken(Member member) {
+       Date now = new Date();
+
+       return Jwts.builder()
+               .setHeaderParam(Header.TYPE, Header.JWT_TYPE)
+               .setIssuedAt(now)
+               .setExpiration(new Date(now.getTime() + REFRESH_TOKEN_DURATION.toMillis()))
+               .setSubject(member.getEmail())
+               .claim("id",member.getId())
+               .signWith(SignatureAlgorithm.HS256, secretKey)
+               .compact();
     }
 
     public boolean validToken(String token) {
@@ -57,20 +76,31 @@ public class TokenProvider {
                     .parseClaimsJws(token);
             return true;
         }catch (Exception e) {
+            log.error("JWT 파싱 에러 : {}", e.getMessage());
             return false;
         }
     }
 
     public Authentication getAuthentication(String token) {
+        log.info("TokenProvider getAuthentication 실행");
         Claims claims = getClaims(token);
-        Set<SimpleGrantedAuthority> authorities = Collections.singleton(new SimpleGrantedAuthority("ROLE_USER"));
+        String email = claims.getSubject();
 
-        return new UsernamePasswordAuthenticationToken(new User(claims.getSubject(), "", authorities), token, authorities);
+        UserDetails userDetails = memberDetailService.loadUserByUsername(email);
+
+        Collection<? extends GrantedAuthority> authorities = userDetails.getAuthorities();
+
+        return new UsernamePasswordAuthenticationToken(userDetails, "", authorities);
     }
 
     public Long getMemberId(String token) {
         Claims claims = getClaims(token);
         return claims.get("id", Long.class);
+    }
+
+    public String getMemberEmail(String token) {
+        Claims claims = getClaims(token);
+        return claims.getSubject();
     }
 
     private Claims getClaims(String token) {

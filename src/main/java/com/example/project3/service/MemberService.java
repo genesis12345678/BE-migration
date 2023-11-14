@@ -1,9 +1,10 @@
 package com.example.project3.service;
 
-import com.example.project3.Entity.Member;
+import com.example.project3.Entity.member.Member;
+import com.example.project3.Entity.member.Role;
 import com.example.project3.config.jwt.TokenProvider;
-import com.example.project3.dto.request.LoginRequest;
 import com.example.project3.dto.request.SignupRequest;
+import com.example.project3.dto.request.SocialUserSignupRequest;
 import com.example.project3.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,7 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.time.Duration;
+import javax.servlet.http.HttpServletResponse;
 
 @Service
 @RequiredArgsConstructor
@@ -20,11 +21,13 @@ import java.time.Duration;
 public class MemberService {
 
     private final MemberRepository memberRepository;
-    private final BCryptPasswordEncoder passwordEncoder;
     private final TokenProvider tokenProvider;
-    private static final String DEFAULT_IMAGE_URL = "https://meatwiki.nii.ac.jp/confluence/images/icons/profilepics/anonymous.png";
+    private final TokenService tokenService;
+
+    public static final String DEFAULT_IMAGE_URL = "https://meatwiki.nii.ac.jp/confluence/images/icons/profilepics/anonymous.png";
 
     public ResponseEntity<String> signup(SignupRequest request) {
+        BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
         if (isExist(request.getEmail())) {
             log.error("중복 이메일, 이미 가입된 정보임.");
@@ -32,6 +35,7 @@ public class MemberService {
         }
 
         String imageURL = request.getImageURL() != null ? request.getImageURL() : DEFAULT_IMAGE_URL;
+
         memberRepository.save(Member.builder()
                                     .name(request.getUserName())
                                     .email(request.getEmail())
@@ -40,32 +44,37 @@ public class MemberService {
                                     .imageURL(imageURL)
                                     .nickName(request.getNickName())
                                     .gender(request.getGender())
-                                    .phoneNumber(request.getPhoneNumber())
+                                    .message(request.getMessage())
+                                    .role(Role.USER)
                                     .build());
+        log.info("회원정보가 저장되었습니다.");
 
         return new ResponseEntity<>("Signup Successful", HttpStatus.OK);
 
     }
 
-    public String login(LoginRequest request) {
-        Member member = memberRepository.findByEmail(request.getEmail())
-                .orElseThrow(()->new IllegalArgumentException("가입된 정보가 없는 이메일"));
-
-        if (isExist(request.getEmail()) && passwordEncoder.matches(request.getPassword(), member.getPassword())) {
-            return tokenProvider.generateToken(member, Duration.ofHours(1));
-        } else if (!passwordEncoder.matches(request.getPassword(), member.getPassword())) {
-            throw new IllegalArgumentException("비밀번호를 확인해주세요.");
-        }
-
-        return null;
-    }
-
-    public Member findById(Long memberId) {
-        return memberRepository.findById(memberId)
-                .orElseThrow(() -> new IllegalArgumentException("Unexpected member"));
-    }
-
-    private boolean isExist(String email){
+    private boolean isExist(String email) {
         return memberRepository.existsByEmail(email);
     }
-}
+
+    public void signupSocialUser(String token, SocialUserSignupRequest request, HttpServletResponse response) {
+        log.info("소셜 유저 회원가입 실행");
+
+        String email = tokenProvider.getMemberEmail(token);
+
+        Member member = memberRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("Cannot Found Member"));
+
+        member.signupSocialUser(request.getMessage(), request.getAddress(), request.getNickName());
+
+        String accessToken = tokenService.createAccessToken(email);
+        String refreshToken = tokenService.createRefreshToken(email);
+
+        member.updateRefreshToken(refreshToken);
+
+        memberRepository.save(member);
+
+        tokenService.sendAccessAndRefreshToken(response, accessToken, refreshToken);
+        }
+
+    }
