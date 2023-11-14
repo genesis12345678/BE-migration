@@ -1,13 +1,22 @@
 package com.example.project3.config.common;
 
+import com.example.project3.Entity.member.Member;
 import com.example.project3.config.jwt.TokenProvider;
+import com.example.project3.dto.request.SocialUserSignupRequest;
+import com.example.project3.repository.MemberRepository;
+import com.example.project3.service.MemberService;
 import com.example.project3.service.TokenService;
+import com.fasterxml.jackson.core.exc.StreamReadException;
+import com.fasterxml.jackson.databind.DatabindException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.mapping.GrantedAuthoritiesMapper;
 import org.springframework.security.core.authority.mapping.NullAuthoritiesMapper;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import javax.servlet.FilterChain;
@@ -15,6 +24,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Collection;
 
 /**
  * 출처 : https://ksh-coding.tistory.com/59#2.%20JWT%20%EC%9D%B8%EC%A6%9D%20%ED%95%84%ED%84%B0%20-%20JwtAuthenticationProcessingFilter-1
@@ -38,6 +48,7 @@ public class JwtAuthenticationProcessingFilter extends OncePerRequestFilter {
 
     private final TokenService tokenService;
     private final TokenProvider tokenProvider;
+    private final MemberService memberService;
 
     private final GrantedAuthoritiesMapper authoritiesMapper = new NullAuthoritiesMapper();
 
@@ -51,6 +62,11 @@ public class JwtAuthenticationProcessingFilter extends OncePerRequestFilter {
         if (request.getRequestURI().equals(NO_CHECK_URL)) {
             filterChain.doFilter(request, response); // "/login" 요청이 들어오면, 다음 필터 호출
             return; // return으로 이후 현재 필터 진행 막기 (안 해주면 아래로 내려가서 계속 필터 진행시킴)
+        }
+
+        if (request.getRequestURI().equals("/oauth/signup") && request.getMethod().equals("POST")) {
+            handleSignupRequest(request, response, filterChain);
+            return;
         }
 
         // 사용자 요청 헤더에서 RefreshToken 추출
@@ -76,6 +92,44 @@ public class JwtAuthenticationProcessingFilter extends OncePerRequestFilter {
         // AccessToken이 유효하다면, 인증 객체가 담긴 상태로 다음 필터로 넘어가기 때문에 인증 성공
         if (refreshToken == null) {
             checkAccessTokenAndAuthentication(request, response, filterChain);
+        }
+    }
+
+    private void handleSignupRequest(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) {
+        try{
+            ObjectMapper objectMapper = new ObjectMapper();
+            SocialUserSignupRequest signupRequest = objectMapper.readValue(request.getReader(), SocialUserSignupRequest.class);
+            log.info("요청 : {}", signupRequest);
+
+
+            log.info("handleSignupRequest() 호출");
+
+            String authorizationHeader = request.getHeader(HEADER_AUTHORIZATION);
+
+            // 요청 URI
+            String requestURI = request.getRequestURI();
+            String method = request.getMethod();
+            log.info("요청 URI : {}, 요청 메소드 : {}", requestURI, method);
+
+            // 가져온 값에서 Bearer 제거
+            String accessToken = getAccessToken(authorizationHeader);
+            log.info("추출된 AccessToken : {}", accessToken);
+
+
+            // 토큰이 유효한지 확인하고, 유효하면 인증 정보를 설정
+            if (tokenProvider.validToken(accessToken)) {
+
+                Authentication authentication = tokenProvider.getAuthentication(accessToken);
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+
+                log.info("Security Context에 '{}' 인증 정보를 저장했습니다", authentication.getName());
+                log.info("저장된 Authentication 객체 : {}", authentication);
+                memberService.signupSocialUser(accessToken, signupRequest,response);
+            }
+
+        } catch (Exception e) {
+            log.error("Signup Error, message : {}", e.getMessage());
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
         }
     }
 
@@ -123,43 +177,11 @@ public class JwtAuthenticationProcessingFilter extends OncePerRequestFilter {
 
             log.info("Security Context에 '{}' 인증 정보를 저장했습니다", authentication.getName());
             log.info("저장된 Authentication 객체 : {}", authentication);
+
         }
         filterChain.doFilter(request, response);
     }
-//
-//    /**
-//     * [인증 허가 메소드]
-//     * 파라미터의 유저 : 우리가 만든 회원 객체 / 빌더의 유저 : UserDetails의 User 객체
-//     *
-//     * new UsernamePasswordAuthenticationToken()로 인증 객체인 Authentication 객체 생성
-//     * UsernamePasswordAuthenticationToken의 파라미터
-//     * 1. 위에서 만든 UserDetailsUser 객체 (유저 정보)
-//     * 2. credential(보통 비밀번호로, 인증 시에는 보통 null로 제거)
-//     * 3. Collection < ? extends GrantedAuthority>로,
-//     * UserDetails의 User 객체 안에 Set<GrantedAuthority> authorities이 있어서 getter로 호출한 후에,
-//     * new NullAuthoritiesMapper()로 GrantedAuthoritiesMapper 객체를 생성하고 mapAuthorities()에 담기
-//     *
-//     * SecurityContextHolder.getContext()로 SecurityContext를 꺼낸 후,
-//     * setAuthentication()을 이용하여 위에서 만든 Authentication 객체에 대한 인증 허가 처리
-//     */
-//    public void saveAuthentication(User myUser) {
-//        String password = myUser.getPassword();
-//        if (password == null) { // 소셜 로그인 유저의 비밀번호 임의로 설정 하여 소셜 로그인 유저도 인증 되도록 설정
-//            password = PasswordUtil.generateRandomPassword();
-//        }
-//
-//        UserDetails userDetailsUser = org.springframework.security.core.userdetails.User.builder()
-//                .username(myUser.getEmail())
-//                .password(password)
-//                .roles(myUser.getRole().name())
-//                .build();
-//
-//        Authentication authentication =
-//                new UsernamePasswordAuthenticationToken(userDetailsUser, null,
-//                        authoritiesMapper.mapAuthorities(userDetailsUser.getAuthorities()));
-//
-//        SecurityContextHolder.getContext().setAuthentication(authentication);
-//    }
+
 
     // 헤더에서 AccessToken 추출
     // 헤더가 비어있거나 "Bearer "로 시작히지 않으면 null

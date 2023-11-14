@@ -3,6 +3,7 @@ package com.example.project3.dto.oauth2;
 import com.example.project3.Entity.member.Member;
 import com.example.project3.Entity.member.Role;
 import com.example.project3.Entity.member.SocialType;
+import com.example.project3.util.PasswordUtil;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -76,9 +77,10 @@ public class OAuthAttributes {
                 .socialType(socialType)
                 .socialId(oAuth2UserInfo.getId())
                 .email(oAuth2UserInfo.getEmail())
-                .name(oAuth2UserInfo.getNickName())
+                .name(oAuth2UserInfo.getName())
                 .imageURL(oAuth2UserInfo.getImageUrl())
                 .role(Role.GUEST)
+                .password(PasswordUtil.generateRandomPassword())
                 .build();
     }
 }

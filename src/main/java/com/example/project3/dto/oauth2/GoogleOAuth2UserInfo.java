@@ -30,7 +30,7 @@ public class GoogleOAuth2UserInfo extends OAuth2UserInfo{
     }
 
     @Override
-    public String getNickName() {
+    public String getName() {
 
         log.info("Google getNickName : {}", attributes.get("name"));
         return (String) attributes.get("name");

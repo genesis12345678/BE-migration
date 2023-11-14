@@ -76,6 +76,7 @@ public class TokenProvider {
                     .parseClaimsJws(token);
             return true;
         }catch (Exception e) {
+            log.error("JWT 파싱 에러 : {}", e.getMessage());
             return false;
         }
     }
@@ -95,6 +96,11 @@ public class TokenProvider {
     public Long getMemberId(String token) {
         Claims claims = getClaims(token);
         return claims.get("id", Long.class);
+    }
+
+    public String getMemberEmail(String token) {
+        Claims claims = getClaims(token);
+        return claims.getSubject();
     }
 
     private Claims getClaims(String token) {

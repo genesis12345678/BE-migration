@@ -10,7 +10,7 @@ public abstract class OAuth2UserInfo {
     protected Map<String, Object> attributes;
 
     public abstract String getId();
-    public abstract String getNickName();
+    public abstract String getName();
     public abstract String getImageUrl();
     public abstract String getEmail();
 

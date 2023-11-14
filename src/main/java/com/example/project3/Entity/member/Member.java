@@ -1,6 +1,7 @@
 package com.example.project3.Entity.member;
 
 import lombok.*;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.persistence.*;
 
@@ -10,6 +11,7 @@ import javax.persistence.*;
 @Entity
 @Builder
 @AllArgsConstructor
+@Slf4j
 public class Member{
 
     @Id
@@ -65,7 +67,15 @@ public class Member{
         this.refreshToken = refreshToken;
     }
 
-    public void authorizeMember() {
+
+    public void signupSocialUser(String message, String address, String nickName) {
+        log.info("signupSocialUser() 실행");
+        log.info("message : {}", message);
+        log.info("address : {}", address);
+        log.info("nickName : {}", nickName);
+        this.message = (message != null) ? message : this.message;
+        this.address = (address != null) ? address : this.address;
+        this.nickName =(nickName != null) ? nickName : this.nickName;
         this.role = Role.USER;
     }
 

@@ -79,17 +79,20 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
     }
 
     private Member getMember(OAuthAttributes attributes, SocialType socialType) {
-        try {
+
             log.info("SocialId : {}", attributes.getOAuth2UserInfo().getId());
             log.info("SocialTpye : {}", socialType);
 
             Member member = memberRepository.findBySocialTypeAndSocialId(socialType, attributes.getOAuth2UserInfo().getId()).orElse(null);
-            log.info("getMember() 실행, findBySocialTypeAndSocialId로 찾은 Member : {}", member.getSocialId());
 
+        if (member != null) {
+            log.info("getMember() 실행, findBySocialTypeAndSocialId로 찾은 Member : {}", member.getSocialId());
             return member;
-        }catch (NullPointerException e){
-            return saveMember(attributes, socialType);
+
         }
+        log.info("조회되는 member가 없어 saveMember()를 실행합니다.");
+        return saveMember(attributes, socialType);
+
     }
 
     private Member saveMember(OAuthAttributes attributes, SocialType socialType) {

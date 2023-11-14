@@ -2,6 +2,7 @@ package com.example.project3.service;
 
 import com.example.project3.Entity.member.Member;
 import com.example.project3.repository.MemberRepository;
+import com.example.project3.util.PasswordUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.User;
@@ -23,7 +24,7 @@ public class MemberDetailService implements UserDetailsService {
         log.info("UserDetails를 전달합니다.");
 
         Member member = memberRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException(email + "로 조회되는 Member가 없습니다."));
+                .orElseThrow(() -> new UsernameNotFoundException(email + "로 조회되는 Member가 없습니다."));
 
 //      org.springframework.security.core.userdetails.User
         return User.builder()

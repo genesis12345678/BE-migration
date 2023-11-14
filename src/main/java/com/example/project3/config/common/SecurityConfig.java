@@ -5,6 +5,7 @@ import com.example.project3.config.login.*;
 import com.example.project3.repository.MemberRepository;
 import com.example.project3.service.CustomOAuth2UserService;
 import com.example.project3.service.MemberDetailService;
+import com.example.project3.service.MemberService;
 import com.example.project3.service.TokenService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +32,7 @@ public class SecurityConfig{
     private final TokenProvider tokenProvider;
     private final ObjectMapper objectMapper;
     private final TokenService tokenService;
+    private final MemberService memberService;
     private final MemberRepository memberRepository;
     private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
     private final OAuth2LoginFailureHandler oAuth2LoginFailureHandler;
@@ -61,7 +63,7 @@ public class SecurityConfig{
                     .authorizeRequests()
                     .antMatchers("/","/css/**","/images/**","/js/**","/favicon.ico").permitAll()
                     .antMatchers( "/signup", "/login").permitAll()
-                    .antMatchers("/test").authenticated()
+                    .anyRequest().authenticated()
 
                     .and()
 
@@ -102,7 +104,7 @@ public class SecurityConfig{
 
     @Bean
     public JwtAuthenticationProcessingFilter jwtAuthenticationProcessingFilter() {
-        return new JwtAuthenticationProcessingFilter(tokenService, tokenProvider);
+        return new JwtAuthenticationProcessingFilter(tokenService, tokenProvider, memberService);
     }
 
     @Bean

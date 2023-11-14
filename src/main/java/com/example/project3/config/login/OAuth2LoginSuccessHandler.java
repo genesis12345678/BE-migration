@@ -38,7 +38,6 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
             // Role이 GUEST일 경우 처음 요청한 회원이므로 추가정보를 위해 회원가입 페이지 리다이렉트
             if (oAuth2User.getRole() == Role.GUEST) {
                 String accessToken = tokenService.createAccessToken(oAuth2User.getEmail());
-                response.addHeader(ACCESS_TOKEN_HEADER, accessToken);
                 // TODO : 프론트의 회원가입 추가 정보 입력 폼으로 리다이렉트
 //                response.sendRedirect();
 
@@ -61,8 +60,6 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
     private void loginSuccess(HttpServletResponse response, CustomOAuth2User oAuth2User) {
         String accessToken = tokenService.createAccessToken(oAuth2User.getEmail());
         String refreshToken = tokenService.createRefreshToken(oAuth2User.getEmail());
-//        response.addHeader(ACCESS_TOKEN_HEADER, BEARER + accessToken);
-//        response.addHeader(REFRESH_TOKEN_HEADER, BEARER + refreshToken);
 
         tokenService.sendAccessAndRefreshToken(response, accessToken, refreshToken);
         tokenService.updateRefreshToken(oAuth2User.getEmail(), refreshToken);
