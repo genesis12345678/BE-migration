@@ -43,7 +43,6 @@ public class MemberService {
                                     .address(request.getAddress())
                                     .imageURL(imageURL)
                                     .nickName(request.getNickName())
-                                    .gender(request.getGender())
                                     .message(request.getMessage())
                                     .role(Role.USER)
                                     .build());
