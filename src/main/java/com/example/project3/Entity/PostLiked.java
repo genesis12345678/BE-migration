@@ -1,5 +1,6 @@
 package com.example.project3.Entity;
 
+import com.example.project3.Entity.member.Member;
 import lombok.*;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
@@ -30,13 +31,6 @@ public class PostLiked {
 
     // true = 좋아요 false = 좋아요 취소
     @Column
-    private boolean liked; //int or enum 고려해보기
-
-//    public PostLiked(Post post, User user) {
-//        this.post = post;
-//        this.user = user;
-//        this.status = true;
-//    }
-
+    private boolean liked;
 
 }

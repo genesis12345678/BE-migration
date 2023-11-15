@@ -14,7 +14,7 @@ public class MediaFile {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long mediaId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "post_id")
@@ -23,9 +23,9 @@ public class MediaFile {
     @Column(name = "file_url")
     private String fileUrl;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "file_type")
-    private FileType fileType;
+//    @Enumerated(EnumType.STRING)
+//    @Column(name = "file_type")
+//    private FileType fileType;
 
     public MediaFile(String fileUrl, Post post) {
         this.fileUrl = fileUrl;

@@ -25,4 +25,6 @@ public class PostResponseDto {
     private Boolean liked;
     private int likedCount;
     private List<String> hashtagNames;
+
+
 }
