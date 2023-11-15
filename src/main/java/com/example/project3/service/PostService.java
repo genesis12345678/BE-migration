@@ -1,6 +1,7 @@
 package com.example.project3.service;
 
 import com.example.project3.Entity.*;
+import com.example.project3.Entity.member.Member;
 import com.example.project3.dto.request.PostRequestDto;
 import com.example.project3.dto.response.PostResponseDto;
 import com.example.project3.repository.HashtagRepository;
@@ -52,7 +53,7 @@ public class PostService {
                 .postId(savedPost.getPostId())
                 .userId(member.getId())
                 .userImg(member.getImageURL())
-                .userName(member.getUsername())
+                .userName(member.getName())
                 .date(savedPost.getCreatedAt())
                 .location(savedPost.getPostLocation())
                 .temperature(21F)

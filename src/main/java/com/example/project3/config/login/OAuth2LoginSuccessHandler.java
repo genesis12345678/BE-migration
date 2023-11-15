@@ -24,9 +24,6 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
     private final TokenService tokenService;
     private final MemberRepository memberRepository;
 
-    private final static String ACCESS_TOKEN_HEADER = "Authorization_Access_Token";
-    private final static String REFRESH_TOKEN_HEADER = "Authorization_Refresh_Token";
-    private final static String BEARER = "Bearer ";
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
         log.info("OAuth2 Login 성공");

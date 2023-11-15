@@ -66,7 +66,7 @@ public class KakaoOAuth2UserInfo extends OAuth2UserInfo {
 
     @Override
     public String getId() {
-        log.info("getId : {}", attributes.get("id"));
+        log.info("kakako getId : {}", attributes.get("id"));
 
         return String.valueOf(attributes.get("id"));
     }
@@ -81,7 +81,7 @@ public class KakaoOAuth2UserInfo extends OAuth2UserInfo {
             return null;
         }
 
-        log.info("getNickName : {}", (String) profile.get("nickname"));
+        log.info("kakako getNickName : {}", (String) profile.get("nickname"));
         return (String) profile.get("nickname");
     }
 
@@ -94,7 +94,7 @@ public class KakaoOAuth2UserInfo extends OAuth2UserInfo {
             return null;
         }
 
-        log.info("getImageUrl : {}", (String) profile.get("thumbnail_image_url"));
+        log.info("kakako getImageUrl : {}", (String) profile.get("thumbnail_image_url"));
         return (String) profile.get("thumbnail_image_url");
     }
 
@@ -106,7 +106,7 @@ public class KakaoOAuth2UserInfo extends OAuth2UserInfo {
             return null;
         }
 
-        log.info("getEmail : {}", (String) account.get("email"));
+        log.info("kakako getEmail : {}", (String) account.get("email"));
         return (String) account.get("email");
     }
 }

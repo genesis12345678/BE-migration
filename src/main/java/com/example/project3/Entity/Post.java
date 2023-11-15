@@ -1,5 +1,6 @@
 package com.example.project3.Entity;
 
+import com.example.project3.Entity.member.Member;
 import com.example.project3.dto.request.PostRequestDto;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -45,7 +46,7 @@ public class Post {
     private LocalDateTime createdAt;
 
 
-    @JoinColumn(name = "memberId")
+    @JoinColumn(name = "member_id")
     @ManyToOne
     private Member member;
 
