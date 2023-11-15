@@ -67,11 +67,12 @@ public class MemberService {
         member.signupSocialUser(request.getMessage(), request.getAddress(), request.getNickName());
 
         String accessToken = tokenService.createAccessToken(email);
-        String refreshToken = tokenService.createRefreshToken(email);
+        String refreshToken = tokenService.createRefreshToken();
 
         member.updateRefreshToken(refreshToken);
 
         memberRepository.save(member);
+        log.info("추가로 입력받은 정보로 GUEST -> USER로 변환하고 회원가입을 마무리합니다.");
 
         tokenService.sendAccessAndRefreshToken(response, accessToken, refreshToken);
         }

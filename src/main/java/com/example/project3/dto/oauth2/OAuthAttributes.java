@@ -73,6 +73,7 @@ public class OAuthAttributes {
      * role은 GUEST로 설정
      */
     public Member toEntity(SocialType socialType, OAuth2UserInfo oAuth2UserInfo) {
+        log.info("처음 등록하려는 소셜 유저입니다, 임의의 비밀번호를 생성하여 GUEST로 정보를 저장 합니다.");
         return Member.builder()
                 .socialType(socialType)
                 .socialId(oAuth2UserInfo.getId())

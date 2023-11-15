@@ -56,15 +56,13 @@ public class TokenProvider {
     }
 
     // TODO : 리프레시토큰에다가 member의 email과 id를 꼭 넣어야 할지 고려해봐야함.
-    public String createRefreshToken(Member member) {
+    public String createRefreshToken() {
        Date now = new Date();
 
        return Jwts.builder()
                .setHeaderParam(Header.TYPE, Header.JWT_TYPE)
                .setIssuedAt(now)
                .setExpiration(new Date(now.getTime() + REFRESH_TOKEN_DURATION.toMillis()))
-               .setSubject(member.getEmail())
-               .claim("id",member.getId())
                .signWith(SignatureAlgorithm.HS256, secretKey)
                .compact();
     }
