@@ -228,6 +228,13 @@ public class PostService {
                 .build();
     }
 
+    public PostResponseDto getPostById(Long postId, String userEmail) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new EntityNotFoundException("Post not found with id: " + postId));
+
+        return createPostResponseDto(post, userEmail);
+    }
+
 
 
 }

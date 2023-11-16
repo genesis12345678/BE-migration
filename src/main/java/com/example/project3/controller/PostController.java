@@ -57,6 +57,18 @@ public class PostController {
                 .body(allPostList);
     }
 
+    @GetMapping("/post/{postId}")
+    public ResponseEntity<PostResponseDto> getPostById(
+            @PathVariable Long postId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        PostResponseDto postResponseDto = postService.getPostById(postId, userDetails.getUsername());
+
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(postResponseDto);
+    }
+
+
 
 
 
