@@ -11,7 +11,6 @@ import java.util.Map;
 @Getter
 public class CustomOAuth2User extends DefaultOAuth2User {
 
-    private String email;
     private Role role;
     /**
      * Constructs a {@code DefaultOAuth2User} using the provided parameters.
@@ -21,10 +20,8 @@ public class CustomOAuth2User extends DefaultOAuth2User {
      * @param nameAttributeKey the key used to access the user's &quot;name&quot; from
      *                         {@link #getAttributes()}
      */
-    public CustomOAuth2User(Collection<? extends GrantedAuthority> authorities, Map<String, Object> attributes, String nameAttributeKey
-    ,String email, Role role) {
+    public CustomOAuth2User(Collection<? extends GrantedAuthority> authorities, Map<String, Object> attributes, String nameAttributeKey,Role role) {
         super(authorities, attributes, nameAttributeKey);
-        this.email = email;
         this.role = role;
     }
 }
