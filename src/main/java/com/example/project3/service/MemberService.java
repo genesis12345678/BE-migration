@@ -26,7 +26,7 @@ public class MemberService {
 
     public static final String DEFAULT_IMAGE_URL = "https://meatwiki.nii.ac.jp/confluence/images/icons/profilepics/anonymous.png";
 
-    public ResponseEntity<String> signup(SignupRequest request) {
+    public ResponseEntity<String> signup(SignupRequest request,String fileUrl) {
         BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
         if (isExist(request.getEmail())) {
@@ -34,7 +34,7 @@ public class MemberService {
             return new ResponseEntity<>("Email already exists", HttpStatus.CONFLICT);
         }
 
-        String imageURL = request.getImageURL() != null ? request.getImageURL() : DEFAULT_IMAGE_URL;
+        String imageURL = (fileUrl != null) ? fileUrl : DEFAULT_IMAGE_URL;
 
         memberRepository.save(Member.builder()
                                     .name(request.getUserName())
