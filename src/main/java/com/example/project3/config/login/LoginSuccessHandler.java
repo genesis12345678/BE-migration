@@ -26,7 +26,7 @@ public class LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
         String email = extractUsername(authentication); // 인증 정보에서 Username(email) 추출
         String accessToken = tokenService.createAccessToken(email); // tokenService의 createAccessToken을 사용하여 AccessToken 발급
-        String refreshToken = tokenService.createRefreshToken(email); // tokenService의 createRefreshToken을 사용하여 RefreshToken 발급
+        String refreshToken = tokenService.createRefreshToken(); // tokenService의 createRefreshToken을 사용하여 RefreshToken 발급
 
         tokenService.sendAccessAndRefreshToken(response, accessToken, refreshToken); // 응답 헤더에 AccessToken, RefreshToken 실어서 응답
 

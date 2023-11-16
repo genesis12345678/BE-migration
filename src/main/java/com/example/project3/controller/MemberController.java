@@ -29,7 +29,6 @@ public class MemberController {
         log.info("imageURL = {}", request.getImageURL());
         log.info("nickName = {}", request.getNickName());
         log.info("message = {}", request.getMessage());
-        log.info("gender = {}", request.getGender());
 
         return memberService.signup(request);
     }

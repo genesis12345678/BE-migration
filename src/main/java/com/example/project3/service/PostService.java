@@ -55,6 +55,7 @@ public class PostService {
 
 
         // PostResponseDto 생성
+
 //        PostResponseDto responseDto = PostResponseDto.builder()
 //                .postId(savedPost.getPostId())
 //                .userId(member.getId())
@@ -74,6 +75,7 @@ public class PostService {
         // 등록 완료 메시지
         String message = "게시물이 성공적으로 등록되었습니다.";
         return message;
+
     }
 
     private List<String> saveMediaFiles(List<MultipartFile> mediaFiles, Post post) {

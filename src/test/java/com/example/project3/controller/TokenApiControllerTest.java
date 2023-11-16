@@ -69,7 +69,6 @@ class TokenApiControllerTest {
         String imageURL = faker.internet().avatar();
         String nickName = faker.name().prefix() + faker.name().firstName();
         String message = faker.lorem().sentence();
-        String gender = faker.options().option("MALE", "FEMALE");
 
         memberRepository.save(Member.builder()
                 .name(username)
@@ -78,7 +77,6 @@ class TokenApiControllerTest {
                 .imageURL(imageURL)
                 .nickName(nickName)
                 .message(message)
-                .gender(gender)
                 .password("testPassword13@")
                 .role(Role.USER)
                 .build());
@@ -86,7 +84,7 @@ class TokenApiControllerTest {
         Member member = memberRepository.findByEmail(email).orElseThrow(
                 () -> new IllegalArgumentException("Unexpected"));
 
-        String refreshToken = tokenService.createRefreshToken(email);
+        String refreshToken = tokenService.createRefreshToken();
 
         member.updateRefreshToken(refreshToken);
         memberRepository.save(member);

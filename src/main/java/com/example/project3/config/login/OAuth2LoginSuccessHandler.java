@@ -14,6 +14,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Map;
 
 @Slf4j
 @Component
@@ -23,9 +24,6 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
     private final TokenService tokenService;
     private final MemberRepository memberRepository;
 
-    private final static String ACCESS_TOKEN_HEADER = "Authorization_Access_Token";
-    private final static String REFRESH_TOKEN_HEADER = "Authorization_Refresh_Token";
-    private final static String BEARER = "Bearer ";
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
         log.info("OAuth2 Login 성공");
@@ -33,20 +31,13 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
 
         try{
             CustomOAuth2User oAuth2User =(CustomOAuth2User) authentication.getPrincipal();
-            log.info("oAuth2USer : {}", oAuth2User);
 
             // Role이 GUEST일 경우 처음 요청한 회원이므로 추가정보를 위해 회원가입 페이지 리다이렉트
             if (oAuth2User.getRole() == Role.GUEST) {
-                String accessToken = tokenService.createAccessToken(oAuth2User.getEmail());
-                // TODO : 프론트의 회원가입 추가 정보 입력 폼으로 리다이렉트
-//                response.sendRedirect();
+                String accessToken = tokenService.createAccessToken(extractEmail(oAuth2User));
 
                 tokenService.sendAccessAndRefreshToken(response, accessToken, null);
 
-                // TODO : 회원가입 추가 폼 입력 시 Role을 "USER"로 업데이트하는 컨트롤러와 서비스 로직 작성 필요
-//                Member member = memberRepository.findByEmail(oAuth2User.getEmail())
-//                        .orElseThrow(() -> new IllegalArgumentException("Cannot Found Member"));
-//                member.authorizeMember();
             } else loginSuccess(response,oAuth2User);
         }catch(Exception e){
             throw e;
@@ -58,10 +49,36 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
 
     // TODO : 소셜 로그인 시에 무조건 토큰 생성 말고 JWT 인증 필터처럼 RefreshToken 유/무에 따라 다르게 처리해보기
     private void loginSuccess(HttpServletResponse response, CustomOAuth2User oAuth2User) {
-        String accessToken = tokenService.createAccessToken(oAuth2User.getEmail());
-        String refreshToken = tokenService.createRefreshToken(oAuth2User.getEmail());
+        String accessToken = tokenService.createAccessToken(extractEmail(oAuth2User));
+        String refreshToken = tokenService.createRefreshToken();
 
         tokenService.sendAccessAndRefreshToken(response, accessToken, refreshToken);
-        tokenService.updateRefreshToken(oAuth2User.getEmail(), refreshToken);
+        tokenService.updateRefreshToken(oAuth2User.getName(), refreshToken);
     }
+
+    private String extractEmail(CustomOAuth2User oAuth2User) {
+        log.info("oAuth2User.getAttributes : {}", oAuth2User.getAttributes());
+
+        String email = null;
+
+        Map<String, Object> attributes = oAuth2User.getAttributes();
+
+        // Google 계정 정보에서 이메일 추출
+        if (attributes.containsKey("email")) {
+            email = (String) attributes.get("email");
+        }
+
+        // Kakao 계정 정보에서 이메일 추출
+        if (attributes.containsKey("kakao_account")) {
+            Map<String, Object> account = (Map<String, Object>) attributes.get("kakao_account");
+            if (account.containsKey("email")) {
+                email = (String) account.get("email");
+            }
+        }
+
+        log.info("추출된 Email: {}", email);
+
+        return email;
+    }
+
 }

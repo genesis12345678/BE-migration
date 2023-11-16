@@ -37,7 +37,7 @@ public class Post {
     private LocalDateTime createdAt;
 
 
-    @JoinColumn(name = "memberId")
+    @JoinColumn(name = "member_id")
     @ManyToOne
     private Member member;
 

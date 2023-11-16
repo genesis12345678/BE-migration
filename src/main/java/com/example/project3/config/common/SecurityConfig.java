@@ -73,7 +73,7 @@ public class SecurityConfig{
                     .userInfoEndpoint().userService(customOAuth2UserService);
 
                 http.addFilterAfter(customJsonUsernamePasswordAuthenticationFilter(), LogoutFilter.class);
-                http.addFilterBefore(jwtAuthenticationProcessingFilter(), UsernamePasswordAuthenticationFilter.class);
+                http.addFilterBefore(jwtAuthenticationProcessingFilter(), CustomJsonUsernamePasswordAuthenticationFilter.class);
 
                    return  http.build();
     }
