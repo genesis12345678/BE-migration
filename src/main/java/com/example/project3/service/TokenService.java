@@ -32,7 +32,7 @@ public class TokenService {
                 .orElseThrow(()-> new IllegalArgumentException("Cannot Found Member"));
 
         String newAccessToken = createAccessToken(member.getEmail());
-        String newRefreshToken = createRefreshToken(member.getEmail());
+        String newRefreshToken = createRefreshToken();
 
         sendAccessAndRefreshToken(response,newAccessToken, newRefreshToken);
 
@@ -52,11 +52,11 @@ public class TokenService {
     }
 
     // RefreshToken 생성
-    public String createRefreshToken(String email) {
+    public String createRefreshToken() {
         log.info("createRefreshToken");
-        Member member = getMember(email);
 
-        return tokenProvider.createRefreshToken(member);
+
+        return tokenProvider.createRefreshToken();
     }
 
     private Member getMember(String email) {

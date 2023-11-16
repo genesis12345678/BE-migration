@@ -1,5 +1,6 @@
 package com.example.project3.Entity;
 
+import com.example.project3.Entity.member.Member;
 import lombok.*;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;

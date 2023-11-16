@@ -30,11 +30,5 @@ public class SignupRequest {
 
     private String nickName;
 
-    @Pattern(regexp = "^(MALE|FEMALE)?$", message = "MALE or FEMALE")
-    private String gender;
-
     private String message;
-
-//    @Pattern(regexp = "^010\\d{8}$", message = "Invalid phone number") // 010xxxxxxxx 만 허용
-//    private String phoneNumber;
 }

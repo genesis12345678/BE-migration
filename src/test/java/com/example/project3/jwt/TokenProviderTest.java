@@ -53,7 +53,6 @@ import static org.assertj.core.api.Assertions.assertThat;
         String imageURL = faker.internet().avatar();
         String nickName = faker.name().prefix() + faker.name().firstName();
         String message = faker.lorem().sentence();
-        String gender = faker.options().option("MALE", "FEMALE");
 
        Member testMember = Member.builder()
                .name(username)
@@ -62,7 +61,6 @@ import static org.assertj.core.api.Assertions.assertThat;
                .imageURL(imageURL)
                .nickName(nickName)
                .message(message)
-               .gender(gender)
                .password("testPassword13@")
                .role(Role.USER)
                .build();
@@ -121,7 +119,6 @@ import static org.assertj.core.api.Assertions.assertThat;
         String imageURL = faker.internet().avatar();
         String nickName = faker.name().prefix() + faker.name().firstName();
         String message = faker.lorem().sentence();
-        String gender = faker.options().option("MALE", "FEMALE");
 
         Member testMember = Member.builder()
                 .name(username)
@@ -130,7 +127,6 @@ import static org.assertj.core.api.Assertions.assertThat;
                 .imageURL(imageURL)
                 .nickName(nickName)
                 .message(message)
-                .gender(gender)
                 .password("testPassword13@")
                 .role(Role.USER)
                 .build();

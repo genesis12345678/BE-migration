@@ -32,8 +32,6 @@ public class Member{
 
     private String nickName;
 
-    private String gender;
-
     private String message;
 
     @Column
@@ -47,18 +45,16 @@ public class Member{
 
     private String refreshToken;
 
-    // 자체 로그인용 빌더
+    // 자체 회원가입용 빌더
     @Builder
     public Member (String name, String email, String password, String address,
-                  String imageURL, String nickName, String gender, String message,
-                  Role role) {
+                  String imageURL, String nickName, String message, Role role) {
         this.name = name;
         this.email = email;
         this.password = password;
         this.address = address;
         this.imageURL = imageURL;
         this.nickName = nickName;
-        this.gender = gender;
         this.message = message;
         this.role = role;
     }
