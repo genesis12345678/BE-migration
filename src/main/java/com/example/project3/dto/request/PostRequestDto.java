@@ -8,7 +8,7 @@ import java.util.List;
 @Data
 public class PostRequestDto {
     private String location;
-    //private Float temperature;
+    private Float temperature;
     private List<MultipartFile> mediaFiles;
     private String content;
     private List<String> hashtags;

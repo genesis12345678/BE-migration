@@ -24,17 +24,8 @@ public class Post {
     @GeneratedValue(strategy= GenerationType.IDENTITY)
     private Long postId;
     private String postContent;
-    //위치
-    @Column
     private String postLocation;
-
-//    //위도
-//    @Column
-//    private double latitude;
-//
-//    //경도
-//    @Column
-//    private double longitude;
+    private Float postTemperature;
 
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL)
@@ -52,6 +43,16 @@ public class Post {
 
 
     private int countLiked; // 좋아요 수
+
+    // 좋아요 수 증가
+    public void increaseCountLiked() {
+        countLiked++;
+    }
+
+    // 좋아요 수 감소
+    public void decreaseCountLiked() {
+        countLiked = Math.max(countLiked - 1, 0);
+    }
 
     @PrePersist // 디비에 INSERT 되기 직전에 실행
     public void createAt() {
