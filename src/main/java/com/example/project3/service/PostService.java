@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.persistence.EntityNotFoundException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -30,7 +31,7 @@ public class PostService {
     public PostResponseDto createPost(String username, PostRequestDto requestDto) {
 
         Member member = memberRepository.findByEmail(username)
-                .orElseThrow(()->new IllegalArgumentException("가입된 정보가 없는 이메일"));
+                .orElseThrow(EntityNotFoundException::new);
 
         Post post = Post.builder()
                 .postLocation(requestDto.getLocation())
