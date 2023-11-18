@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import javax.persistence.EntityNotFoundException;
 import javax.servlet.http.HttpServletResponse;
 
 @RequiredArgsConstructor
@@ -23,13 +24,9 @@ public class TokenService {
 
     // AccessToken이 만료되었을 때 새로운 AccessToken을 발급
     public void createNewAccessToken(String refreshToken, HttpServletResponse response){
-        if (!tokenProvider.validToken(refreshToken)) {
-            throw new IllegalArgumentException("Unexpected token");
-        }
-
 
         Member member = memberRepository.findByRefreshToken(refreshToken)
-                .orElseThrow(()-> new IllegalArgumentException("Cannot Found Member"));
+                .orElseThrow(EntityNotFoundException::new);
 
         String newAccessToken = createAccessToken(member.getEmail());
         String newRefreshToken = createRefreshToken();
@@ -55,14 +52,10 @@ public class TokenService {
     public String createRefreshToken() {
         log.info("createRefreshToken");
 
-
         return tokenProvider.createRefreshToken();
     }
 
-    private Member getMember(String email) {
-        return memberRepository.findByEmail(email)
-                .orElseThrow(()->new IllegalArgumentException("Cannot Found Member"));
-    }
+
 
     // AccessToken과 RefreshToken을 헤더에 실어서 응답
     public void sendAccessAndRefreshToken(HttpServletResponse response, String accessToken, String refreshToken) {
@@ -75,11 +68,12 @@ public class TokenService {
     }
 
     public void updateRefreshToken(String email, String refreshToken) {
-        memberRepository.findByEmail(email)
-                .ifPresentOrElse(
-                        member -> member.updateRefreshToken(refreshToken),
-                        () -> new Exception("Cannot Found Member")
-                );
 
+        getMember(email).updateRefreshToken(refreshToken);
+    }
+
+    private Member getMember(String email) {
+        return memberRepository.findByEmail(email)
+                .orElseThrow(EntityNotFoundException::new);
     }
 }

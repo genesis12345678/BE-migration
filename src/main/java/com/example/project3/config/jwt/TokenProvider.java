@@ -1,12 +1,8 @@
 package com.example.project3.config.jwt;
 
 import com.example.project3.Entity.member.Member;
-import com.example.project3.repository.MemberRepository;
 import com.example.project3.service.MemberDetailService;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Header;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -16,6 +12,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
+import javax.servlet.http.HttpServletRequest;
 import java.time.Duration;
 import java.util.Base64;
 import java.util.Collection;
@@ -27,7 +24,6 @@ import java.util.Date;
 public class TokenProvider {
 
     private final JwtProperties jwtProperties;
-    private final MemberRepository memberRepository;
     private final MemberDetailService memberDetailService;
     private String secretKey;
 
@@ -67,13 +63,26 @@ public class TokenProvider {
                .compact();
     }
 
-    public boolean validToken(String token) {
+    public boolean validToken(String token, HttpServletRequest request) {
         try{
             Jwts.parser()
                     .setSigningKey(secretKey)
                     .parseClaimsJws(token);
             return true;
-        }catch (Exception e) {
+        }catch (ExpiredJwtException e) {
+            request.setAttribute("exception", e);
+            log.error("토큰이 만료되었습니다. 에러 메시지: {}", e.getMessage());
+            return false;
+        } catch (MalformedJwtException e) {
+            request.setAttribute("exception", e);
+            log.error("올바르지 않은 형식의 토큰입니다. 에러 메시지: {}", e.getMessage());
+            return false;
+        } catch (SignatureException e) {
+            request.setAttribute("exception", e);
+            log.error("토큰 서명이 유효하지 않습니다. 에러 메시지: {}", e.getMessage());
+            return false;
+        } catch (Exception e) {
+            request.setAttribute("exception", e);
             log.error("JWT 파싱 에러 : {}", e.getMessage());
             return false;
         }
