@@ -2,9 +2,9 @@ name: CI/CD
 
 on:
   push:
-    branches: [ feature-user_management/jgy ]
+    branches: [ main ]
   pull_request:
-    branches: [ feature-user_management/jgy ]
+    branches: [ main ]
 
 env:
   S3_BUCKET_NAME: geunyeong
