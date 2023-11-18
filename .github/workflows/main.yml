@@ -2,12 +2,12 @@ name: CI/CD
 
 on:
   push:
-    branches: [ main ]
+    branches: [ feature-user_management/jgy ]
   pull_request:
-    branches: [ main ]
+    branches: [ feature-user_management/jgy ]
 
 env:
-  S3_BUCKET_NAME: cointalk-deploy
+  S3_BUCKET_NAME: geunyeong
 
 jobs:
   build:
