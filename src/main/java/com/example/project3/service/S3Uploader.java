@@ -27,6 +27,20 @@ public class S3Uploader {
 
     private final AmazonS3Client amazonS3Client;
 
+    public String uploadProfileImage(MultipartFile file) throws IOException {
+        if (isImageFile(file)) {
+            return upload(file);
+        } else {
+            log.error("이미지 파일이 아닙니다.");
+            throw new IllegalArgumentException("Unsupported file type");
+        }
+    }
+
+    private boolean isImageFile(MultipartFile file) {
+        String contentType = file.getContentType();
+        return contentType != null && contentType.startsWith("image/");
+    }
+
     public List<String> upload(List<MultipartFile> files) {
         List<String> fileUrls = new ArrayList<>();
 

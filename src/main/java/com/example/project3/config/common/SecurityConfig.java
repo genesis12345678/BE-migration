@@ -20,7 +20,6 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.logout.LogoutFilter;
 
 @Configuration
@@ -37,6 +36,7 @@ public class SecurityConfig{
     private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
     private final OAuth2LoginFailureHandler oAuth2LoginFailureHandler;
     private final CustomOAuth2UserService customOAuth2UserService;
+    private final AuthenticationEntryPoint authenticationEntryPoint;
 
 
     @Bean
@@ -52,6 +52,10 @@ public class SecurityConfig{
                     .csrf().disable()
                     .cors().and()
 
+                    .exceptionHandling()
+                    .authenticationEntryPoint(authenticationEntryPoint)
+                    .and()
+
                     .formLogin().disable()
                     .httpBasic().disable()
 
@@ -62,7 +66,7 @@ public class SecurityConfig{
 
                     .authorizeRequests()
                     .antMatchers("/","/css/**","/images/**","/js/**","/favicon.ico").permitAll()
-                    .antMatchers( "/signup", "/login").permitAll()
+                    .antMatchers( "/**/signup", "/login").permitAll()
                     .anyRequest().authenticated()
 
                     .and()
