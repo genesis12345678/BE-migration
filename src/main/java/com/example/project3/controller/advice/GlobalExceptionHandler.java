@@ -1,6 +1,7 @@
 package com.example.project3.controller.advice;
 
 import com.example.project3.exception.FileUploadException;
+import com.example.project3.exception.NotImageFileException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.validation.BindingResult;
@@ -45,9 +46,9 @@ public class GlobalExceptionHandler {
         return errorResponse;
     }
 
-    @ExceptionHandler(IllegalArgumentException.class)
+    @ExceptionHandler(NotImageFileException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public Map<String, String> handleIllegalArgumentException() {
+    public Map<String, String> handleNotImageFileException() {
         Map<String, String> errorResponse = new HashMap<>();
         errorResponse.put("error", "이미지 파일이 아닙니다.");
         return errorResponse;
