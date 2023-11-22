@@ -7,6 +7,7 @@ import com.example.project3.dto.request.SignupRequest;
 import com.example.project3.dto.request.SocialUserSignupRequest;
 import com.example.project3.dto.response.MemberInfoResponse;
 import com.example.project3.dto.response.SimplifiedPostResponse;
+import com.example.project3.exception.FileUploadException;
 import com.example.project3.repository.MemberRepository;
 import com.example.project3.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
@@ -15,9 +16,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.persistence.EntityNotFoundException;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -30,10 +33,12 @@ public class MemberService {
     private final TokenProvider tokenProvider;
     private final TokenService tokenService;
     private final PostRepository postRepository;
+    private final S3Uploader s3Uploader;
+
 
     public static final String DEFAULT_IMAGE_URL = "https://meatwiki.nii.ac.jp/confluence/images/icons/profilepics/anonymous.png";
 
-    public ResponseEntity<String> signup(SignupRequest request,String fileUrl) {
+    public ResponseEntity<String> signup(SignupRequest request, MultipartFile file){
         BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
         return memberRepository.findByEmail(request.getEmail())
@@ -42,7 +47,9 @@ public class MemberService {
                     return new ResponseEntity<>("Email already exists", HttpStatus.CONFLICT);
                 })
                 .orElseGet(()->{
-                    String imageURL = (fileUrl != null) ? fileUrl : DEFAULT_IMAGE_URL;
+                    try {
+
+                    String imageURL = (!file.isEmpty()) ? s3Uploader.uploadProfileImage(file) : DEFAULT_IMAGE_URL;
 
                     memberRepository.save(Member.builder()
                                     .name(request.getUserName())
@@ -55,6 +62,11 @@ public class MemberService {
                                     .role(Role.USER)
                                     .build());
                      log.info("회원정보가 저장되었습니다.");
+
+                    } catch (IOException e) {
+                        log.error("파일 업로드 중 오류 발생");
+                        throw new FileUploadException("파일 업로드 중 오류 발생",e);
+                    }
 
                     return new ResponseEntity<>("Signup Successful", HttpStatus.OK);
                 });
