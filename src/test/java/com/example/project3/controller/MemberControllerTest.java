@@ -4,6 +4,7 @@ import com.example.project3.Entity.member.Member;
 import com.example.project3.dto.request.SignupRequest;
 import com.example.project3.repository.MemberRepository;
 import com.example.project3.service.MemberService;
+import com.example.project3.service.S3Uploader;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -14,18 +15,24 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 
@@ -41,6 +48,9 @@ public class MemberControllerTest {
     @Autowired
     private MemberRepository memberRepository;
 
+    @MockBean
+    private S3Uploader s3Uploader;
+
     @Autowired
     private WebApplicationContext context;
 
@@ -53,6 +63,7 @@ public class MemberControllerTest {
     void init() {
         this.mockMvc = MockMvcBuilders.webAppContextSetup(context).build();
         memberRepository.deleteAll();
+        s3Uploader.deleteFile("image.jpg");
     }
 
     @Test
@@ -67,22 +78,22 @@ public class MemberControllerTest {
         String nickName = faker.name().prefix() + faker.name().firstName();
         String message = faker.lorem().sentence();
 
-        SignupRequest request = new SignupRequest(username, email, "password12@",
-                address, imageURL, nickName, message);
+        SignupRequest signupRequest = new SignupRequest(username, email, "password12@",
+                address, nickName, message);
 
-        final String requestBody = objectMapper.writeValueAsString(request);
+        final String requestBody = objectMapper.writeValueAsString(signupRequest);
 
         // when
-        ResultActions result = getResult(requestBody); // json 변환
 
-        Member member = memberRepository.findByEmail(request.getEmail()).get();
+        ResultActions result = getSignupResult(signupRequest);
+        Member member = memberRepository.findByEmail(signupRequest.getEmail()).get();
 
         // then
+        // 비밀번호 암호화 테스트
+        assertThat(member.getPassword()).isNotEqualTo(signupRequest.getPassword());
+
         result.andExpect(status().isOk())
                 .andExpect(content().string("Signup Successful"));
-
-        // 비밀번호 암호화 테스트
-        assertThat(member.getPassword()).isNotEqualTo(request.getPassword());
     }
 
     @Test
@@ -97,20 +108,19 @@ public class MemberControllerTest {
         String nickName = faker.name().prefix() + faker.name().firstName();
         String message = faker.lorem().sentence();
 
-        SignupRequest request = new SignupRequest(username, email, password,
-                address, null, nickName, message);
-
-        final String requestBody = objectMapper.writeValueAsString(request);
+        SignupRequest signupRequest = new SignupRequest(username, email, password,
+                address, nickName, message);
 
         // when
-        ResultActions result = getResult(requestBody);
-
+        ResultActions result = getSignupResult(signupRequest);
 
         // then
         result.andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.email").value("Invalid Email"))
+                .andExpect(jsonPath("$.email").value("이메일 형식을 맞춰주세요."))
                 .andExpect(jsonPath("$.password").value("8 ~ 20자, 최소 한개의 특수문자와 숫자, 영문 알파벳을 포함해야 함."));
     }
+
+
 
     @Test
     @DisplayName("회원 가입에 실패한다.(중복 회원)")
@@ -125,10 +135,10 @@ public class MemberControllerTest {
         String message = faker.lorem().sentence();
 
         SignupRequest request = new SignupRequest(username, email, password,
-                address, null, nickName, message);
+                address, nickName, message);
 
         // when
-        memberService.signup(request);
+        memberService.signup(request, null);
 
         Member member = memberRepository.findByEmail(request.getEmail()).get();
 
@@ -137,9 +147,7 @@ public class MemberControllerTest {
         assertThat(member.getImageURL()).isEqualTo(MemberService.DEFAULT_IMAGE_URL);
 
         // when
-        final String requestBody = objectMapper.writeValueAsString(request);
-
-        ResultActions result = getResult(requestBody);
+        ResultActions result = getSignupResult(request);
 
         // then
         result.andExpect(status().isConflict())
@@ -163,33 +171,41 @@ public class MemberControllerTest {
         String password = "testPassword13@";
 
         SignupRequest request = new SignupRequest(username, email, password,
-                address, imageURL, nickName, message);
-
-        final String requestBody = objectMapper.writeValueAsString(request);
+                address, nickName, message);
 
         // when
-        getResult(requestBody); // 먼저 "/signup"으로 회원가입 신청
+        getSignupResult(request); // 먼저 "/api/signup"으로 회원가입 신청
 
         LoginRequest loginRequest = new LoginRequest(email, password);
 
-        final String requestBody_2 = objectMapper.writeValueAsString(loginRequest);
-
-        ResultActions resultActions = mockMvc.perform(post(url)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(requestBody_2));
-
+        final String requestBody = objectMapper.writeValueAsString(loginRequest);
 
         // then
-        resultActions.andExpect(status().isCreated())
+        mockMvc.perform(post(url)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestBody))
+                .andExpect(status().isCreated())
                 .andExpect(header().string("Authorization_Access_Token", is(not(""))))
                 .andExpect(header().string("Authorization_Refresh_Token", is(not(""))));
     }
 
 
-    private ResultActions getResult(String requestBody) throws Exception {
-        return mockMvc.perform(post("/signup")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(requestBody));
+    private ResultActions getSignupResult(SignupRequest signupRequest) throws Exception {
+
+        String requestBody = objectMapper.writeValueAsString(signupRequest);
+
+        MockMultipartFile request = new MockMultipartFile("request", "","application/json", requestBody.getBytes());
+        MockMultipartFile file = new MockMultipartFile("file", "image.jpg", "image/jpeg","content".getBytes());
+
+
+        ResultActions result = mockMvc.perform(multipart("/api/signup")
+                        .file(file)
+                        .file(request)
+                        .contentType(MediaType.MULTIPART_FORM_DATA)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .characterEncoding(StandardCharsets.UTF_8))
+                        .andDo(print());
+        return result;
     }
 
     @AllArgsConstructor

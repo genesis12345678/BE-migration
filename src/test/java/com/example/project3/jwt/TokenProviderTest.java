@@ -10,11 +10,13 @@ import net.datafaker.Faker;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import javax.servlet.http.HttpServletRequest;
 import java.time.Duration;
 import java.util.Base64;
 import java.util.Date;
@@ -92,8 +94,10 @@ import static org.assertj.core.api.Assertions.assertThat;
                 .expiration(new Date(new Date().getTime() - Duration.ofDays(7).toMillis()))
                 .build()
                 .createToken(jwtProperties);
+
+        HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
         // when
-        boolean result = tokenProvider.validToken(token);
+        boolean result = tokenProvider.validToken(token, request);
         // then
         assertThat(result).isFalse();
     }
@@ -102,9 +106,10 @@ import static org.assertj.core.api.Assertions.assertThat;
     void validToken() {
         // given
         String token = JwtFactory.withDefaultValues().createToken(jwtProperties);
+        HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
 
         // when
-        boolean result = tokenProvider.validToken(token);
+        boolean result = tokenProvider.validToken(token, request);
 
         // then
         assertThat(result).isTrue();
