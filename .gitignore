@@ -10,8 +10,8 @@ src/main/resources/application-db.properties
 src/main/resources/application-oauth.properties
 database.db
 .github/workflows/main.yml
-appspec.yml
 scripts/deploy.sh
+appspec.yml
 
 ### STS ###
 .apt_generated
