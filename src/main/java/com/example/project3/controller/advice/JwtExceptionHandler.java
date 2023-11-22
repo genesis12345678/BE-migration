@@ -26,4 +26,9 @@ public class JwtExceptionHandler {
     public String handleExpiredJwtException() {
         return "토큰이 만료되었습니다.";
     }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public String handleIllegalArgumentException(){
+        return "토큰 필요";
+    }
 }
