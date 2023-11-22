@@ -17,6 +17,7 @@ import org.springframework.security.core.authority.mapping.GrantedAuthoritiesMap
 import org.springframework.security.core.authority.mapping.NullAuthoritiesMapper;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import javax.servlet.FilterChain;
@@ -83,7 +84,7 @@ public class JwtAuthenticationProcessingFilter extends OncePerRequestFilter {
         // 일치한다면 AccessToken을 재발급해준다.
         if (refreshToken != null) {
             log.info("checkRefreshTokenAndReIssueAccessToken 메소드 실행");
-            checkRefreshTokenAndReIssueAccessToken(response, refreshToken);
+            checkRefreshTokenAndReIssueAccessToken(response, refreshToken, request);
             return; // RefreshToken을 보낸 경우에는 AccessToken을 재발급 하고 인증 처리는 하지 않게 하기위해 바로 return으로 필터 진행 막기
         }
 
@@ -117,7 +118,7 @@ public class JwtAuthenticationProcessingFilter extends OncePerRequestFilter {
 
 
             // 토큰이 유효한지 확인하고, 유효하면 인증 정보를 설정
-            if (tokenProvider.validToken(accessToken)) {
+            if (tokenProvider.validToken(accessToken, request)) {
 
                 Authentication authentication = tokenProvider.getAuthentication(accessToken);
                 SecurityContextHolder.getContext().setAuthentication(authentication);
@@ -140,9 +141,11 @@ public class JwtAuthenticationProcessingFilter extends OncePerRequestFilter {
      *  리프레시 토큰 재발급 & DB에 리프레시 토큰 업데이트 메소드 호출
      *  그 후 응답으로 새로운 AccessToken과 RefreshToken 각각 헤더로 응답
      */
-    public void checkRefreshTokenAndReIssueAccessToken(HttpServletResponse response, String refreshToken) {
-        log.info("새로운 AccessToken 생성 시작");
-        tokenService.createNewAccessToken(refreshToken, response);
+    public void checkRefreshTokenAndReIssueAccessToken(HttpServletResponse response, String refreshToken, HttpServletRequest request) {
+        if(tokenProvider.validToken(refreshToken, request)) {
+            log.info("새로운 AccessToken 생성 시작");
+            tokenService.createNewAccessToken(refreshToken, response);
+        }
     }
 
     /**
@@ -168,18 +171,22 @@ public class JwtAuthenticationProcessingFilter extends OncePerRequestFilter {
         String accessToken = getAccessToken(authorizationHeader);
         log.info("추출된 AccessToken : {}", accessToken);
 
-
+        try {
         // 토큰이 유효한지 확인하고, 유효하면 인증 정보를 설정
-        if (tokenProvider.validToken(accessToken)) {
+            if (tokenProvider.validToken(accessToken, request)) {
 
-            Authentication authentication = tokenProvider.getAuthentication(accessToken);
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+                Authentication authentication = tokenProvider.getAuthentication(accessToken);
+                SecurityContextHolder.getContext().setAuthentication(authentication);
 
-            log.info("Security Context에 '{}' 인증 정보를 저장했습니다", authentication.getName());
-            log.info("저장된 Authentication 객체 : {}", authentication);
+                log.info("Security Context에 '{}' 인증 정보를 저장했습니다", authentication.getName());
+                log.info("저장된 Authentication 객체 : {}", authentication);
 
+            }
+            filterChain.doFilter(request, response);
+        }catch (UsernameNotFoundException e){
+            request.setAttribute("exception", e);
+            filterChain.doFilter(request,response);
         }
-        filterChain.doFilter(request, response);
     }
 
 

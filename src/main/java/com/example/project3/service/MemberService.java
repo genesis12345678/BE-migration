@@ -5,15 +5,24 @@ import com.example.project3.Entity.member.Role;
 import com.example.project3.config.jwt.TokenProvider;
 import com.example.project3.dto.request.SignupRequest;
 import com.example.project3.dto.request.SocialUserSignupRequest;
+import com.example.project3.dto.response.MemberInfoResponse;
+import com.example.project3.dto.response.SimplifiedPostResponse;
+import com.example.project3.exception.FileUploadException;
 import com.example.project3.repository.MemberRepository;
+import com.example.project3.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.persistence.EntityNotFoundException;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -23,20 +32,26 @@ public class MemberService {
     private final MemberRepository memberRepository;
     private final TokenProvider tokenProvider;
     private final TokenService tokenService;
+    private final PostRepository postRepository;
+    private final S3Uploader s3Uploader;
+
 
     public static final String DEFAULT_IMAGE_URL = "https://meatwiki.nii.ac.jp/confluence/images/icons/profilepics/anonymous.png";
 
-    public ResponseEntity<String> signup(SignupRequest request) {
+    public ResponseEntity<String> signup(SignupRequest request, MultipartFile file){
         BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
-        if (isExist(request.getEmail())) {
-            log.error("중복 이메일, 이미 가입된 정보임.");
-            return new ResponseEntity<>("Email already exists", HttpStatus.CONFLICT);
-        }
+        return memberRepository.findByEmail(request.getEmail())
+                .map(member -> {
+                    log.error("중복 이메일, 이미 가입된 정보임.");
+                    return new ResponseEntity<>("Email already exists", HttpStatus.CONFLICT);
+                })
+                .orElseGet(()->{
+                    try {
 
-        String imageURL = request.getImageURL() != null ? request.getImageURL() : DEFAULT_IMAGE_URL;
+                    String imageURL = (!file.isEmpty()) ? s3Uploader.uploadProfileImage(file) : DEFAULT_IMAGE_URL;
 
-        memberRepository.save(Member.builder()
+                    memberRepository.save(Member.builder()
                                     .name(request.getUserName())
                                     .email(request.getEmail())
                                     .password(passwordEncoder.encode(request.getPassword()))
@@ -46,15 +61,17 @@ public class MemberService {
                                     .message(request.getMessage())
                                     .role(Role.USER)
                                     .build());
-        log.info("회원정보가 저장되었습니다.");
+                     log.info("회원정보가 저장되었습니다.");
 
-        return new ResponseEntity<>("Signup Successful", HttpStatus.OK);
+                    } catch (IOException e) {
+                        log.error("파일 업로드 중 오류 발생");
+                        throw new FileUploadException("파일 업로드 중 오류 발생",e);
+                    }
 
+                    return new ResponseEntity<>("Signup Successful", HttpStatus.OK);
+                });
     }
 
-    private boolean isExist(String email) {
-        return memberRepository.existsByEmail(email);
-    }
 
     public void signupSocialUser(String token, SocialUserSignupRequest request, HttpServletResponse response) {
         log.info("소셜 유저 회원가입 실행");
@@ -62,7 +79,7 @@ public class MemberService {
         String email = tokenProvider.getMemberEmail(token);
 
         Member member = memberRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("Cannot Found Member"));
+                .orElseThrow(EntityNotFoundException::new);
 
         member.signupSocialUser(request.getMessage(), request.getAddress(), request.getNickName());
 
@@ -77,4 +94,28 @@ public class MemberService {
         tokenService.sendAccessAndRefreshToken(response, accessToken, refreshToken);
         }
 
+    public MemberInfoResponse getMemberInfo(String username) {
+
+        Member member = memberRepository.findByEmail(username)
+                .orElseThrow(EntityNotFoundException::new);
+
+        List<SimplifiedPostResponse> simplifiedPosts = postRepository.findByMemberIdOrderByCreatedAtDesc(member.getId())
+                .stream()
+                .map(SimplifiedPostResponse::new)
+                .collect(Collectors.toList());
+
+        return MemberInfoResponse.builder()
+                .memberId(member.getId())
+                .name(member.getName())
+                .email(member.getEmail())
+                .imageUrl(member.getImageURL())
+                .address(member.getAddress())
+                .message(member.getMessage())
+                .nickName(member.getNickName())
+                .socialId(member.getSocialId())
+                .socialType(member.getSocialType())
+                .simplifiedPostResponseList(simplifiedPosts)
+                .build();
+
     }
+}

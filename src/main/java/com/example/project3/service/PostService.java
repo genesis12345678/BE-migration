@@ -35,7 +35,7 @@ public class PostService {
     public String createPost(String username, PostRequestDto requestDto) {
 
         Member member = memberRepository.findByEmail(username)
-                .orElseThrow(()->new IllegalArgumentException("가입된 정보가 없는 이메일"));
+                .orElseThrow(EntityNotFoundException::new);
 
         Post post = Post.builder()
                 .postLocation(requestDto.getLocation())

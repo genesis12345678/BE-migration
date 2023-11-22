@@ -2,8 +2,10 @@ package com.example.project3.service;
 
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.CannedAccessControlList;
+import com.amazonaws.services.s3.model.DeleteObjectRequest;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.example.project3.exception.NotImageFileException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,6 +28,20 @@ public class S3Uploader {
     private String bucketName;
 
     private final AmazonS3Client amazonS3Client;
+
+    public String uploadProfileImage(MultipartFile file) throws IOException {
+        if (isImageFile(file)) {
+            return upload(file);
+        } else {
+            log.error("이미지 파일이 아닙니다.");
+            throw new NotImageFileException("Unsupported file type");
+        }
+    }
+
+    private boolean isImageFile(MultipartFile file) {
+        String contentType = file.getContentType();
+        return contentType != null && contentType.startsWith("image/");
+    }
 
     public List<String> upload(List<MultipartFile> files) {
         List<String> fileUrls = new ArrayList<>();
@@ -97,6 +113,10 @@ public class S3Uploader {
             e.printStackTrace();
             return Optional.empty();
         }
+    }
+
+    public void deleteFile(String fileName) {
+        amazonS3Client.deleteObject(new DeleteObjectRequest(bucketName, fileName));
     }
 
 

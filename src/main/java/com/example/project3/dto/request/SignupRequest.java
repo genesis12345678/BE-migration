@@ -1,6 +1,8 @@
 package com.example.project3.dto.request;
 
 import lombok.*;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
@@ -15,7 +17,7 @@ public class SignupRequest {
     private String userName;
 
     @NotBlank(message = "Email is required") // "", " ", null 허용 안함.
-    @Email(message = "Invalid Email")
+    @Email(message = "이메일 형식을 맞춰주세요.")
     private String email;
 
     @NotBlank(message = "Password is required")
@@ -25,8 +27,6 @@ public class SignupRequest {
 
     @NotBlank(message = "Address is required")
     private String address;
-
-    private String imageURL;
 
     private String nickName;
 
