@@ -81,7 +81,7 @@ public class TokenProvider {
             request.setAttribute("exception", e);
             log.error("토큰 서명이 유효하지 않습니다. 에러 메시지: {}", e.getMessage());
             return false;
-        } catch (Exception e) {
+        } catch (IllegalArgumentException e) {
             request.setAttribute("exception", e);
             log.error("JWT 파싱 에러 : {}", e.getMessage());
             return false;
