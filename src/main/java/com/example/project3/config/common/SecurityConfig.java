@@ -74,7 +74,7 @@ public class SecurityConfig{
 
                     .authorizeRequests()
                     .antMatchers("/","/css/**","/images/**","/js/**","/favicon.ico").permitAll()
-                    .antMatchers( "/**/signup", "/login").permitAll()
+                    .antMatchers( "/**/signup", "/login","/**/posts").permitAll()
                     .anyRequest().authenticated()
 
                     .and()
@@ -94,16 +94,15 @@ public class SecurityConfig{
     public CorsConfigurationSource corsConfigurationSource(){
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of("http://localhost:3000"));
-        configuration.setAllowCredentials(true); // token 주고 받을 때,
-//        configuration.addExposedHeader("Authorization"); // token
+        configuration.setAllowCredentials(true);
         configuration.addAllowedHeader("*");
         configuration.setAllowedMethods(Arrays.asList("GET", "PUT", "POST", "PATCH", "DELETE", "OPTIONS"));
-//        configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
+
 
     @Bean
     public AuthenticationManager authenticationManager() {
