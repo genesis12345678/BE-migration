@@ -5,6 +5,7 @@ import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.DeleteObjectRequest;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.example.project3.exception.NotImageFileException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,7 +34,7 @@ public class S3Uploader {
             return upload(file);
         } else {
             log.error("이미지 파일이 아닙니다.");
-            throw new IllegalArgumentException("Unsupported file type");
+            throw new NotImageFileException("Unsupported file type");
         }
     }
 
