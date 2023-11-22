@@ -21,7 +21,11 @@ public class AuthenticationEntryPoint implements org.springframework.security.we
 
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException){
+        Exception exception = (Exception) request.getAttribute("exception");
+        if (exception != null) {
+            resolver.resolveException(request, response, null, (Exception) request.getAttribute("exception"));
 
-        resolver.resolveException(request, response, null, (Exception) request.getAttribute("exception"));
+        }
+
     }
 }
