@@ -53,7 +53,7 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         String refreshToken = tokenService.createRefreshToken();
 
         tokenService.sendAccessAndRefreshToken(response, accessToken, refreshToken);
-        tokenService.updateRefreshToken(oAuth2User.getName(), refreshToken);
+        tokenService.updateRefreshToken(extractEmail(oAuth2User), refreshToken);
     }
 
     private String extractEmail(CustomOAuth2User oAuth2User) {
