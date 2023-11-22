@@ -22,10 +22,9 @@ import java.io.IOException;
 public class MemberController {
 
     private final MemberService memberService;
-    private final S3Uploader s3Uploader;
 
     @PostMapping("/signup")
-    public ResponseEntity<?> signup(@Valid @RequestPart("request") SignupRequest request, @RequestPart(value = "file",required = false)MultipartFile file) throws IOException {
+    public ResponseEntity<?> signup(@Valid @RequestPart("request") SignupRequest request, @RequestPart(value = "file",required = false)MultipartFile file){
         log.info("회원가입 요청이 들어왔습니다.");
 
         log.info("userName = {}",request.getUserName());
@@ -35,13 +34,7 @@ public class MemberController {
         log.info("nickName = {}", request.getNickName());
         log.info("message = {}", request.getMessage());
 
-        if (file.isEmpty()) {
-            return memberService.signup(request, null);
-        }
-        else{
-            String url = s3Uploader.uploadProfileImage(file);
-            return memberService.signup(request, url);
-        }
+        return memberService.signup(request, file);
     }
 
 
@@ -50,5 +43,4 @@ public class MemberController {
         MemberInfoResponse userInfo = memberService.getMemberInfo(userDetails.getUsername());
         return ResponseEntity.ok().body(userInfo);
     }
-
 }
