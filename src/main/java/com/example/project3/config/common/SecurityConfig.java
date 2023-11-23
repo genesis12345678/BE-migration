@@ -1,5 +1,6 @@
 package com.example.project3.config.common;
 
+import com.example.project3.config.LogoutSuccessHandler;
 import com.example.project3.config.jwt.TokenProvider;
 import com.example.project3.config.login.*;
 import com.example.project3.repository.MemberRepository;
@@ -16,7 +17,6 @@ import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -46,13 +46,6 @@ public class SecurityConfig{
 
 
     @Bean
-    public WebSecurityCustomizer configure() {
-        return (web) -> web.ignoring()
-                .antMatchers("/api/v2/**", "/swagger-ui.html","/swagger/**",
-                        "/swagger-resources/**","/webjars/**","/v2/api-docs");
-    }
-
-    @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
                     http
                     .csrf().disable()
@@ -75,6 +68,8 @@ public class SecurityConfig{
                     .authorizeRequests()
                     .antMatchers("/","/css/**","/images/**","/js/**","/favicon.ico").permitAll()
                     .antMatchers( "/**/signup", "/login","/**/posts").permitAll()
+                    .antMatchers("/api/v2/**", "/swagger-ui.html","/swagger/**",
+                                "/swagger-resources/**","/webjars/**","/v2/api-docs").permitAll()
                     .anyRequest().authenticated()
 
                     .and()
@@ -83,6 +78,10 @@ public class SecurityConfig{
                     .successHandler(oAuth2LoginSuccessHandler)
                     .failureHandler(oAuth2LoginFailureHandler)
                     .userInfoEndpoint().userService(customOAuth2UserService);
+
+                    http.logout()
+                        .logoutSuccessHandler(logoutSuccessHandler())
+                        .permitAll();
 
                 http.addFilterAfter(customJsonUsernamePasswordAuthenticationFilter(), LogoutFilter.class);
                 http.addFilterBefore(jwtAuthenticationProcessingFilter(), CustomJsonUsernamePasswordAuthenticationFilter.class);
@@ -140,5 +139,10 @@ public class SecurityConfig{
     @Bean
     public LoginFailureHandler loginFailureHandler() {
         return new LoginFailureHandler();
+    }
+
+    @Bean
+    public LogoutSuccessHandler logoutSuccessHandler() {
+        return new LogoutSuccessHandler();
     }
 }
