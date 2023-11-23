@@ -31,4 +31,12 @@ public class MediaFile {
         this.fileUrl = fileUrl;
         this.post = post;
     }
+
+    public MediaFile(String fileUrl) {
+        this.fileUrl = fileUrl;
+    }
+    public void setPost2(Post post) {
+        this.post = post;
+        post.getMediaFiles().add(this);
+    }
 }

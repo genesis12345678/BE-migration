@@ -1,9 +1,10 @@
 package com.example.project3.controller;
 
 import com.example.project3.dto.request.PostRequestDto;
+import com.example.project3.dto.request.PostUpdateRequestDto;
 import com.example.project3.dto.response.PostResponseDto;
 import com.example.project3.service.PostService;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -14,27 +15,30 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
-@RequiredArgsConstructor
+import java.util.Collections;
+
+//@RequiredArgsConstructor
 @RequestMapping("/api")
 @RestController
 public class PostController {
-    private final PostService postService;
+    //private final PostService postService;
+    @Autowired
+    private PostService postService;
+
+
     public static final int DEFAULT_PAGE_SIZE = 10;
 
     @PostMapping("/post")
-    //public ResponseEntity<PostResponseDto> createPost(
     public ResponseEntity<String> createPost(
             @AuthenticationPrincipal UserDetails userDetails,
             PostRequestDto postRequestDto) {
 
-       // PostResponseDto postResponseDto = postService.createPost(userDetails.getUsername(), postRequestDto);
-        String message = postService.createPost(userDetails.getUsername(), postRequestDto);
 
-        //System.out.println(postResponseDto);
+        Long postId = postService.createPost(userDetails.getUsername(), postRequestDto);
+        String message = "게시물이 성공적으로 등록되었습니다.";
 
         return ResponseEntity.status(HttpStatus.OK)
-                //.body(postResponseDto);
-                .body(message);
+                .body(postId + message);
     }
 
     @GetMapping("/posts")
@@ -44,17 +48,18 @@ public class PostController {
             @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC, size = DEFAULT_PAGE_SIZE)
             Pageable pageable) {
 
-        Page<PostResponseDto> allPostList;
-
-        if (userDetails == null) {
-            // 사용자가 로그인되지 않은 경우
-            allPostList = postService.getAllPostListForAnonymous(lastPostId, pageable);
+        if (userDetails != null) {
+            // 로그인한 경우
+            Page<PostResponseDto> allPostList = postService.getAllPostList(lastPostId, pageable, userDetails.getUsername());
+            return ResponseEntity.status(HttpStatus.OK)
+                    .body(allPostList);
         } else {
-            // 사용자가 로그인한 경우
-            allPostList = postService.getAllPostList(lastPostId, pageable, userDetails.getUsername());
+            // 로그인하지 않은 경우
+            Page<PostResponseDto> allPostList = postService.getAllPostList(lastPostId, pageable, null);
+            return ResponseEntity.status(HttpStatus.OK)
+                    .body(allPostList);
         }
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(allPostList);
+
     }
 
     @GetMapping("/post/{postId}")
@@ -68,7 +73,25 @@ public class PostController {
                 .body(postResponseDto);
     }
 
+    @PutMapping("/post/update/{postId}")
+    public ResponseEntity<PostResponseDto> updatePost1(
+            @PathVariable Long postId,
+            @AuthenticationPrincipal UserDetails userDetails,
+            PostUpdateRequestDto postUpdateRequestDto) {
 
+        if (postUpdateRequestDto.getNewPostImages() != null && postUpdateRequestDto.getNewPostImages().size() + postUpdateRequestDto.getOriginalImages().size() > 3) {
+            throw new IllegalArgumentException("사진은 3장만 등록가능합니다.");
+        }
+        if (postUpdateRequestDto.getNewPostImages() == null) {
+            postUpdateRequestDto.setNewPostImages(Collections.emptyList());
+        }
+
+
+
+        PostResponseDto postResponseDto = postService.updatePost2(postId, userDetails.getUsername(), postUpdateRequestDto);
+        return ResponseEntity.status(HttpStatus.OK).body(postResponseDto);
+
+    }
 
 
 
@@ -76,21 +99,15 @@ public class PostController {
     public ResponseEntity<String> toggleLike(
             @PathVariable Long postId,
             @AuthenticationPrincipal UserDetails userDetails) {
-        if (userDetails == null) {
-            // 사용자가 로그인되지 않았습니다. 에러 응답을 반환합니다.
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("게시물에 좋아요를 누르려면 로그인이 필요합니다.");
-        }
 
         boolean isLiked = postService.toggleLike(postId, userDetails.getUsername());
-
-        HttpStatus status = isLiked ? HttpStatus.CREATED : HttpStatus.NO_CONTENT;
 
         if (isLiked) {
             return ResponseEntity.status(HttpStatus.CREATED).body("좋아요가 추가되었습니다.");
         } else {
             return ResponseEntity.status(HttpStatus.NO_CONTENT).body("이미 좋아요를 누르셨습니다.");
         }
-//        return ResponseEntity.status(status).build();
+
     }
 
 
