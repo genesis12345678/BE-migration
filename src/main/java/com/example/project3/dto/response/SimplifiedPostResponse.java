@@ -20,8 +20,8 @@ public class SimplifiedPostResponse {
         this.postId = post.getPostId();
         this.createdAt = post.getCreatedAt();
         // MediaFile이 존재하는 경우에만 첫 번째 MediaFile의 fileUrl을 추가
-        this.mediaUrls = post.getMedias().isEmpty()
+        this.mediaUrls = post.getMediaFiles().isEmpty()
                             ? Collections.emptyList()
-                            : Collections.singletonList(post.getMedias().get(0).getFileUrl());
+                            : Collections.singletonList(post.getMediaFiles().get(0).getFileUrl());
     }
 }
