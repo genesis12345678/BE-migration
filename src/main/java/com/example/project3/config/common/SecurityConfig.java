@@ -1,5 +1,6 @@
 package com.example.project3.config.common;
 
+import com.example.project3.config.LogoutSuccessHandler;
 import com.example.project3.config.jwt.TokenProvider;
 import com.example.project3.config.login.*;
 import com.example.project3.repository.MemberRepository;
@@ -16,7 +17,6 @@ import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -79,6 +79,10 @@ public class SecurityConfig{
                     .failureHandler(oAuth2LoginFailureHandler)
                     .userInfoEndpoint().userService(customOAuth2UserService);
 
+                    http.logout()
+                        .logoutSuccessHandler(logoutSuccessHandler())
+                        .permitAll();
+
                 http.addFilterAfter(customJsonUsernamePasswordAuthenticationFilter(), LogoutFilter.class);
                 http.addFilterBefore(jwtAuthenticationProcessingFilter(), CustomJsonUsernamePasswordAuthenticationFilter.class);
 
@@ -135,5 +139,10 @@ public class SecurityConfig{
     @Bean
     public LoginFailureHandler loginFailureHandler() {
         return new LoginFailureHandler();
+    }
+
+    @Bean
+    public LogoutSuccessHandler logoutSuccessHandler() {
+        return new LogoutSuccessHandler();
     }
 }
