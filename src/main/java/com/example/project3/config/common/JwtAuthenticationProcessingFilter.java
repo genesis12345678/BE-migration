@@ -109,8 +109,9 @@ public class JwtAuthenticationProcessingFilter extends OncePerRequestFilter {
                 requestURI.equals("/") ||
                 requestURI.equals("/csrf") ||
                 requestURI.equals("/api/signup") ||
-                requestURI.equals("/favicon.io") ||
+                requestURI.equals("/favicon.ico") ||
                 requestURI.contains("oauth2") ||
+                requestURI.equals("/logout") ||
                 false );
     }
 
