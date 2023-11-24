@@ -27,7 +27,7 @@ public class PostController {
             @AuthenticationPrincipal UserDetails userDetails,
             PostRequestDto postRequestDto) {
 
-       // PostResponseDto postResponseDto = postService.createPost(userDetails.getUsername(), postRequestDto);
+        // PostResponseDto postResponseDto = postService.createPost(userDetails.getUsername(), postRequestDto);
         String message = postService.createPost(userDetails.getUsername(), postRequestDto);
 
         //System.out.println(postResponseDto);
