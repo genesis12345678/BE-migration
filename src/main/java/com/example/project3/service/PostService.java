@@ -3,9 +3,12 @@ package com.example.project3.service;
 import com.example.project3.Entity.*;
 import com.example.project3.Entity.member.Member;
 import com.example.project3.dto.request.PostRequestDto;
+import com.example.project3.dto.request.PostUpdateRequestDto;
+import com.example.project3.dto.response.PostLikedMemberResponseDto;
 import com.example.project3.dto.response.PostResponseDto;
 import com.example.project3.repository.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -14,11 +17,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.persistence.EntityNotFoundException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class PostService {
@@ -26,16 +28,16 @@ public class PostService {
     private final PostRepository postRepository;
     private final PostLikedRepository postLikedRepository;
     private final PostHashtagRepository postHashtagRepository;
+    private final MediaFileRepository mediaFileRepository;
     private final HashtagRepository hashtagRepository;
     private final S3Uploader s3Uploader;
 
 
     @Transactional
-    //public PostResponseDto createPost(String username, PostRequestDto requestDto) {
-    public String createPost(String username, PostRequestDto requestDto) {
+    public Long createPost(String username, PostRequestDto requestDto) {
 
         Member member = memberRepository.findByEmail(username)
-                .orElseThrow(EntityNotFoundException::new);
+                .orElseThrow(()->new IllegalArgumentException("가입된 정보가 없는 이메일"));
 
         Post post = Post.builder()
                 .postLocation(requestDto.getLocation())
@@ -43,58 +45,52 @@ public class PostService {
                 .postTemperature(requestDto.getTemperature())
                 .member(member)
                 .build();
+
         // DB에 저장
         Post savedPost = postRepository.save(post);
 
-        System.out.println("savedPost 저장 후 " + savedPost);
-
         // MediaFiles 처리
-        //List<String> mediaUrls = saveMediaFiles(requestDto.getMediaFiles());
-        List<String> mediaUrls = saveMediaFiles(requestDto.getMediaFiles(), savedPost);
-        List<String> hashtagNames = saveHashtagNames(requestDto.getHashtags(), savedPost);
+        saveMediaFiles(requestDto.getMediaFiles(), post);
+        log.info("미디어 처리 완료.");
+        // Hashtag 처리
+        saveHashtagNames(requestDto.getHashtags(), post);
+        //Post savedPost = postRepository.save(post);
 
-
-        // PostResponseDto 생성
-
-//        PostResponseDto responseDto = PostResponseDto.builder()
-//                .postId(savedPost.getPostId())
-//                .userId(member.getId())
-//                .userImg(member.getImageURL())
-//                .userName(member.getName())
-//                .date(savedPost.getCreatedAt())
-//                .location(savedPost.getPostLocation())
-//                .temperature(21F)
-//                .mediaUrls(mediaUrls)
-//                .content(savedPost.getPostContent())
-//                .liked(false)
-//                .likedCount(0)
-//                .hashtagNames(hashtagNames)
-//                .build();
-//
-//        return responseDto;
-        // 등록 완료 메시지
-        String message = "게시물이 성공적으로 등록되었습니다.";
-        return message;
+        return savedPost.getPostId();
 
     }
 
-    private List<String> saveMediaFiles(List<MultipartFile> mediaFiles, Post post) {
+    private void saveMediaFiles(List<MultipartFile> mediaFiles, Post post) {
+        log.info("사진 저장 로직 실행중");
         if (mediaFiles == null) {
-            return Collections.emptyList();
+            Collections.emptyList();
         }
 
         List<String> mediaUrls = s3Uploader.upload(mediaFiles); // 수정
-        // 각 URL을 Post 엔티티에 추가
+
+        log.info("S3 업로드 후 url 반환 = {}", mediaUrls);
+        // 각 URL을 Post 엔터티에 추가
+        if (post.getMediaFiles() == null) {
+            post.setMediaFiles();
+        }
+
+        // 각 URL을 Post 엔티티에 추가하고 MediaFile 객체를 리스트에 추가
         for (String mediaUrl : mediaUrls) {
             MediaFile mediaFile = new MediaFile(mediaUrl, post);
             post.addMediaFile(mediaFile);
         }
 
-        return mediaUrls;
+
     }
 
-    private List<String> saveHashtagNames(List<String> hashtagNames, Post post) {
-        List<String> savedHashtagNames = new ArrayList<>();
+    private void saveHashtagNames(List<String> hashtagNames, Post post) {
+
+        // 기존 해시태그가 null이 아닌 경우에 clear
+        if (post.getPostHashtags() != null) {
+            post.getPostHashtags().clear();
+        } else {
+            post.setPostHashtags(new ArrayList<>()); // null이면 새로운 리스트 생성
+        }
 
         for (String hashtagName : hashtagNames) {
             // 데이터베이스에 해시태그가 이미 존재하는지 확인
@@ -108,13 +104,12 @@ public class PostService {
 
             // PostHashtag 생성 및 저장
             PostHashtag postHashtag = new PostHashtag(post, existingHashtag);
-            postHashtagRepository.save(postHashtag);
+            existingHashtag.addPostHashtag(postHashtag);
 
             // 저장된 해시태그의 이름을 리스트에 추가
-            savedHashtagNames.add(existingHashtag.getHashtagName());
+            post.getPostHashtags().add(postHashtag);
         }
 
-        return savedHashtagNames;
     }
 
 
@@ -158,15 +153,17 @@ public class PostService {
     }
 
     private PostResponseDto createPostResponseDto(Post post, String userEmail) {
-        Member member = memberRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + userEmail));
+        Member member = (userEmail != null)
+                ? memberRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + userEmail))
+                : post.getMember(); // 사용자가 로그인하지 않은 경우 게시글 작성자 정보 사용
 
-
-        List<String> mediaUrls = post.getMedias().stream()
+        List<String> mediaUrls = post.getMediaFiles().stream()
                 .map(MediaFile::getFileUrl)
                 .collect(Collectors.toList());
 
-        boolean isPostLiked = postLikedRepository.existsByPostAndMember(post, member);
+        boolean isPostLiked = userEmail != null && postLikedRepository.existsByPostAndMember(post, member); // 사용자가 로그인하지 않은 경우 좋아요 여부 false로 설정
+
 
         return PostResponseDto.builder()
                 .postId(post.getPostId())
@@ -183,53 +180,135 @@ public class PostService {
                 .hashtagNames(post.getPostHashtags().stream()
                         .map(PostHashtag::getHashtag)
                         .map(Hashtag::getHashtagName)
+                        .distinct()
                         .collect(Collectors.toList()))
                 .build();
     }
 
-    public Page<PostResponseDto> getAllPostListForAnonymous(Long lastPostId, Pageable pageable) {
-        // 사용자가 로그인하지 않은 경우의 로직을 구현합니다.
-        // 예를 들어, 좋아요 상태를 기본값으로 설정하거나 필요에 따라 다르게 처리할 수 있습니다.
 
-        // 게시글을 페이징하여 가져오기
-        Page<Post> posts = postRepository.findByPostIdLessThanOrderByCreatedAtDesc(lastPostId, pageable);
+    public PostResponseDto getPostById(Long postId, String userEmail) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new EntityNotFoundException("Post not found with id: " + postId));
 
-        // Page<Post>를 Page<PostResponseDto>로 변환
-        Page<PostResponseDto> postResponseDtoPage = posts.map(post -> createPostResponseDtoForAnonymous(post));
-
-        return postResponseDtoPage;
+        return createPostResponseDto(post, userEmail);
     }
 
-    private PostResponseDto createPostResponseDtoForAnonymous(Post post) {
-        // 사용자가 로그인하지 않은 경우에 대한 PostResponseDto를 생성하는 로직을 구현합니다.
-        // 예를 들어, 좋아요 상태를 기본값으로 설정하거나 필요에 따라 다르게 처리할 수 있습니다.
 
-        List<String> mediaUrls = post.getMedias().stream()
+
+
+    @Transactional
+    public PostResponseDto updatePost(Long postId, String username, PostUpdateRequestDto request) {
+
+        // 게시글 조회
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new EntityNotFoundException("Post not found with id: " + postId));
+        post.update(request);
+
+        // 기존 이미지와 넘어온 이미지 비교
+        List<String> updateOriginalImages = request.getOriginalImages();
+        List<String> productImages = getExistingImageUrls(post.getMediaFiles());
+        // 원래 있던 이미지에서 빠진 이미지를 찾아냄
+        List<String> removeImages = pickUpRemoveProductImages(productImages, updateOriginalImages);
+
+        // 레파지토리에서 이미지 삭제, S3에서 빠진 이미지 파일 삭제
+        for (String deletedImage : removeImages) {
+            mediaFileRepository.deleteByPostIdAndFileUrl(postId, deletedImage);
+            s3Uploader.delete(deletedImage);
+        }
+
+        // 새로운 이미지 파일 추가
+        addPostImages(post, request.getNewPostImages());
+
+        updatePostHashtags(post, request.getHashtags());
+
+        // 수정된 게시글 저장
+        postRepository.save(post);
+
+
+        // 수정된 게시글의 응답 DTO 생성
+        return createPostResponseDto(post, username);
+    }
+
+    private List<String> getExistingImageUrls(List<MediaFile> existingImages) {
+        return existingImages.stream()
                 .map(MediaFile::getFileUrl)
                 .collect(Collectors.toList());
-
-        // 로그인하지 않은 경우에는 좋아요 상태를 기본값으로 설정
-        boolean isPostLiked = false;
-
-        return PostResponseDto.builder()
-                .postId(post.getPostId())
-                .userId(post.getMember().getId())
-                .userImg(post.getMember().getImageURL())
-                .userName(post.getMember().getName())
-                .date(post.getCreatedAt())
-                .location(post.getPostLocation())
-                .temperature(post.getPostTemperature())
-                .mediaUrls(mediaUrls)
-                .content(post.getPostContent())
-                .liked(isPostLiked)
-                .likedCount(post.getCountLiked())
-                .hashtagNames(post.getPostHashtags().stream()
-                        .map(PostHashtag::getHashtag)
-                        .map(Hashtag::getHashtagName)
-                        .collect(Collectors.toList()))
-                .build();
+    }
+    private List<String> pickUpRemoveProductImages(List<String> originImage, List<String> updateImage) {
+        return originImage.stream()
+                .filter(image -> !updateImage.contains(image))
+                .collect(Collectors.toList());
     }
 
+    private void addPostImages(Post post, List<MultipartFile> mediaFiles) {
+        List<String> postMediaUrls = s3UploadAndConverter(mediaFiles);
+        // 기존 이미지 파일과 새로 추가된 이미지 파일의 중복을 방지하기 위해 새로운 이미지 추가 전에 모든 기존 이미지를 삭제
+        post.getMediaFiles().clear();
 
 
+        for (String mediaUrl : postMediaUrls) {
+            MediaFile mediaFile = new MediaFile(mediaUrl);
+            //post.addPostImage(mediaFile);
+            post.addMediaFile(mediaFile); // addMediaFile 메서드로 추가하도록 수정
+        }
+    }
+    public List<String> s3UploadAndConverter(List<MultipartFile> multipartFiles) {
+        List<String> mediaUrls = s3Uploader.upload(multipartFiles);
+        return mediaUrls;
+    }
+    private void updatePostHashtags(Post post, List<String> newHashtags) {
+        // 기존의 해시태그를 가져옵니다.
+        List<PostHashtag> existingPostHashtags = post.getPostHashtags();
+
+        // 기존 해시태그를 삭제합니다.
+        existingPostHashtags.clear();
+
+        // 기존 해시태그 삭제
+        postHashtagRepository.deleteByPostId(post.getPostId());
+        log.info("해시태그 삭제 By postId");
+
+        // 새로운 해시태그를 추가합니다.
+        for (String newHashtag : newHashtags) {
+            // 데이터베이스에 해시태그가 이미 존재하는지 확인
+            Hashtag existingKeyword = hashtagRepository.findByHashtagName(newHashtag);
+
+            // 존재하지 않으면 생성 및 저장
+            if (existingKeyword == null) {
+                existingKeyword = new Hashtag(newHashtag);
+                existingKeyword = hashtagRepository.save(existingKeyword);
+            }
+
+            // PostHashtag 생성 및 저장
+            PostHashtag postHashtag = new PostHashtag(post, existingKeyword);
+            postHashtagRepository.save(postHashtag);
+            existingPostHashtags.add(postHashtag);
+        }
+    }
+
+    public List<PostLikedMemberResponseDto> getLikers(Long postId) {
+        // 특정 postId에 대한 PostLiked 정보 가져오기
+        List<PostLiked> postLikedList = postLikedRepository.findByPost_PostId(postId);
+
+        // 결과를 저장할 리스트 초기화
+        List<PostLikedMemberResponseDto> responseDtoList = new ArrayList<>();
+
+        // 각 PostLiked 정보에 대해
+        for (PostLiked postLiked : postLikedList) {
+            // liked가 true인 경우에만 처리
+            if (postLiked.isLiked()) {
+                // 해당 Member 정보 가져오기
+                Member member = postLiked.getMember();
+                // Member 정보를 MemberResponseDto로 변환하여 결과 리스트에 추가
+                PostLikedMemberResponseDto responseDto = PostLikedMemberResponseDto.builder()
+                        .memberId(member.getId())
+                        .name(member.getName())
+                        .imageUrl(member.getImageURL())
+                        .nickName(member.getNickName())
+                        .build();
+                responseDtoList.add(responseDto);
+            }
+        }
+
+        return responseDtoList;
+    }
 }

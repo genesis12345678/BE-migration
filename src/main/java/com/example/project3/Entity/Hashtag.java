@@ -1,15 +1,11 @@
 package com.example.project3.Entity;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-
+import javax.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
+//@ToString
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
@@ -19,9 +15,18 @@ public class Hashtag {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long hashtagId;
+    @Column(unique = true)
     private String hashtagName;
+
+    @OneToMany(mappedBy = "hashtag")
+    private List<PostHashtag> postHashtags = new ArrayList<>();
 
     public Hashtag(String hashtagName) {
         this.hashtagName = hashtagName;
+    }
+
+    public void addPostHashtag(PostHashtag postHashtag) {
+        this.postHashtags.add(postHashtag);
+        postHashtag.setHashtag(this);
     }
 }
