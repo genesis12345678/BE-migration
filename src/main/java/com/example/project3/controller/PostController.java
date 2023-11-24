@@ -2,6 +2,7 @@ package com.example.project3.controller;
 
 import com.example.project3.dto.request.PostRequestDto;
 import com.example.project3.dto.request.PostUpdateRequestDto;
+import com.example.project3.dto.response.PostLikedMemberResponseDto;
 import com.example.project3.dto.response.PostResponseDto;
 import com.example.project3.service.PostService;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
+import java.util.List;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -115,6 +117,19 @@ public class PostController {
         }
 
     }
+
+
+    // 좋아요를 누른 유저 목록 조회
+    @GetMapping("/post/{postId}/likers")
+    public ResponseEntity<List<PostLikedMemberResponseDto>> getLikes(@PathVariable Long postId) {
+
+        List<PostLikedMemberResponseDto> likedUsers  = postService.getLikers(postId);
+
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(likedUsers);
+    }
+
+
 
 
 
