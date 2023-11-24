@@ -49,40 +49,47 @@ public class PostService {
         Post savedPost = postRepository.save(post);
 
         // MediaFiles 처리
-        saveMediaFiles(requestDto.getMediaFiles(), savedPost);
+        saveMediaFiles(requestDto.getMediaFiles(), post);
+        log.info("미디어 처리 완료.");
         // Hashtag 처리
-        saveHashtagNames(requestDto.getHashtags(), savedPost);
-
+        saveHashtagNames(requestDto.getHashtags(), post);
+        //Post savedPost = postRepository.save(post);
 
         return savedPost.getPostId();
 
     }
 
-    private List<MediaFile> saveMediaFiles(List<MultipartFile> mediaFiles, Post post) {
+    private void saveMediaFiles(List<MultipartFile> mediaFiles, Post post) {
+        log.info("사진 저장 로직 실행중");
         if (mediaFiles == null) {
-            return Collections.emptyList();
+            Collections.emptyList();
         }
 
         List<String> mediaUrls = s3Uploader.upload(mediaFiles); // 수정
-        log.info(String.valueOf(mediaUrls));
+
+        log.info("S3 업로드 후 url 반환 = {}", mediaUrls);
         // 각 URL을 Post 엔터티에 추가
         if (post.getMediaFiles() == null) {
-            post.setMedias();
+            post.setMediaFiles();
         }
-        List<MediaFile> mediaFileList = new ArrayList<>();
 
         // 각 URL을 Post 엔티티에 추가하고 MediaFile 객체를 리스트에 추가
         for (String mediaUrl : mediaUrls) {
             MediaFile mediaFile = new MediaFile(mediaUrl, post);
             post.addMediaFile(mediaFile);
-            mediaFileList.add(mediaFile);
         }
 
-        return mediaFileList;
+
     }
 
-    private List<String> saveHashtagNames(List<String> hashtagNames, Post post) {
-        List<String> savedHashtagNames = new ArrayList<>();
+    private void saveHashtagNames(List<String> hashtagNames, Post post) {
+
+        // 기존 해시태그가 null이 아닌 경우에 clear
+        if (post.getPostHashtags() != null) {
+            post.getPostHashtags().clear();
+        } else {
+            post.setPostHashtags(new ArrayList<>()); // null이면 새로운 리스트 생성
+        }
 
         for (String hashtagName : hashtagNames) {
             // 데이터베이스에 해시태그가 이미 존재하는지 확인
@@ -96,13 +103,12 @@ public class PostService {
 
             // PostHashtag 생성 및 저장
             PostHashtag postHashtag = new PostHashtag(post, existingHashtag);
-            postHashtagRepository.save(postHashtag);
+            existingHashtag.addPostHashtag(postHashtag);
 
             // 저장된 해시태그의 이름을 리스트에 추가
-            savedHashtagNames.add(existingHashtag.getHashtagName());
+            post.getPostHashtags().add(postHashtag);
         }
 
-        return savedHashtagNames;
     }
 
 
@@ -178,48 +184,6 @@ public class PostService {
                 .build();
     }
 
-    public Page<PostResponseDto> getAllPostListForAnonymous(Long lastPostId, Pageable pageable) {
-        // 사용자가 로그인하지 않은 경우의 로직을 구현합니다.
-        // 예를 들어, 좋아요 상태를 기본값으로 설정하거나 필요에 따라 다르게 처리할 수 있습니다.
-
-        // 게시글을 페이징하여 가져오기
-        Page<Post> posts = postRepository.findByPostIdLessThanOrderByCreatedAtDesc(lastPostId, pageable);
-
-        // Page<Post>를 Page<PostResponseDto>로 변환
-        Page<PostResponseDto> postResponseDtoPage = posts.map(post -> createPostResponseDtoForAnonymous(post));
-
-        return postResponseDtoPage;
-    }
-
-    private PostResponseDto createPostResponseDtoForAnonymous(Post post) {
-        // 사용자가 로그인하지 않은 경우에 대한 PostResponseDto를 생성하는 로직을 구현합니다.
-        // 예를 들어, 좋아요 상태를 기본값으로 설정하거나 필요에 따라 다르게 처리할 수 있습니다.
-
-        List<String> mediaUrls = post.getMediaFiles().stream()
-                .map(MediaFile::getFileUrl)
-                .collect(Collectors.toList());
-
-        // 로그인하지 않은 경우에는 좋아요 상태를 기본값으로 설정
-        boolean isPostLiked = false;
-
-        return PostResponseDto.builder()
-                .postId(post.getPostId())
-                .userId(post.getMember().getId())
-                .userImg(post.getMember().getImageURL())
-                .userName(post.getMember().getName())
-                .date(post.getCreatedAt())
-                .location(post.getPostLocation())
-                .temperature(post.getPostTemperature())
-                .mediaUrls(mediaUrls)
-                .content(post.getPostContent())
-                .liked(isPostLiked)
-                .likedCount(post.getCountLiked())
-                .hashtagNames(post.getPostHashtags().stream()
-                        .map(PostHashtag::getHashtag)
-                        .map(Hashtag::getHashtagName)
-                        .collect(Collectors.toList()))
-                .build();
-    }
 
     public PostResponseDto getPostById(Long postId, String userEmail) {
         Post post = postRepository.findById(postId)
@@ -232,12 +196,13 @@ public class PostService {
 
 
     @Transactional
-    public PostResponseDto updatePost2(Long postId, String username, PostUpdateRequestDto request) {
+    public PostResponseDto updatePost(Long postId, String username, PostUpdateRequestDto request) {
 
         // 게시글 조회
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new EntityNotFoundException("Post not found with id: " + postId));
-//        post.update(request);
+        post.update(request);
+
         // 기존 이미지와 넘어온 이미지 비교
         List<String> updateOriginalImages = request.getOriginalImages();
         List<String> productImages = getExistingImageUrls(post.getMediaFiles());
@@ -253,21 +218,14 @@ public class PostService {
         // 새로운 이미지 파일 추가
         addPostImages(post, request.getNewPostImages());
 
-        updateHashtags(post, request.getHashtags());
-        //updateHashtags1(post, requestDto.getHashtags());
+        updatePostHashtags(post, request.getHashtags());
 
-        post.update(request);
         // 수정된 게시글 저장
         postRepository.save(post);
 
 
-        // 영속성 컨텍스트에서 업데이트된 게시글을 다시 조회하여 응답 DTO 생성
-        Post updatedPost = postRepository.findById(postId)
-                .orElseThrow(() -> new EntityNotFoundException("Post not found with id: " + postId));
-
-
         // 수정된 게시글의 응답 DTO 생성
-        return createPostResponseDto(updatedPost, username);
+        return createPostResponseDto(post, username);
     }
 
     private List<String> getExistingImageUrls(List<MediaFile> existingImages) {
@@ -297,28 +255,32 @@ public class PostService {
         List<String> mediaUrls = s3Uploader.upload(multipartFiles);
         return mediaUrls;
     }
-    private void updateHashtags(Post post, List<String> newHashtags) {
+    private void updatePostHashtags(Post post, List<String> newHashtags) {
         // 기존의 해시태그를 가져옵니다.
         List<PostHashtag> existingPostHashtags = post.getPostHashtags();
+
+        // 기존 해시태그를 삭제합니다.
+        existingPostHashtags.clear();
+
+        // 기존 해시태그 삭제
+        postHashtagRepository.deleteByPostId(post.getPostId());
+        log.info("해시태그 삭제 By postId");
 
         // 새로운 해시태그를 추가합니다.
         for (String newHashtag : newHashtags) {
             // 데이터베이스에 해시태그가 이미 존재하는지 확인
-            Hashtag existingHashtag = hashtagRepository.findHashtagByHashtagName(newHashtag);
+            Hashtag existingKeyword = hashtagRepository.findByHashtagName(newHashtag);
 
             // 존재하지 않으면 생성 및 저장
-            if (existingHashtag == null) {
-                existingHashtag = new Hashtag(newHashtag);
-                existingHashtag = hashtagRepository.save(existingHashtag);
+            if (existingKeyword == null) {
+                existingKeyword = new Hashtag(newHashtag);
+                existingKeyword = hashtagRepository.save(existingKeyword);
             }
 
-            // 중복되지 않는 해시태그만 추가합니다.
-            if (!existingPostHashtags.stream().anyMatch(postHashtag -> postHashtag.getHashtag().getHashtagName().equals(newHashtag))) {
-                // PostHashtag 생성 및 저장
-                PostHashtag postHashtag = new PostHashtag(post, existingHashtag);
-                postHashtagRepository.save(postHashtag);
-                existingPostHashtags.add(postHashtag);
-            }
+            // PostHashtag 생성 및 저장
+            PostHashtag postHashtag = new PostHashtag(post, existingKeyword);
+            postHashtagRepository.save(postHashtag);
+            existingPostHashtags.add(postHashtag);
         }
     }
 
