@@ -4,6 +4,7 @@ import com.example.project3.Entity.*;
 import com.example.project3.Entity.member.Member;
 import com.example.project3.dto.request.PostRequestDto;
 import com.example.project3.dto.request.PostUpdateRequestDto;
+import com.example.project3.dto.response.PostLikedMemberResponseDto;
 import com.example.project3.dto.response.PostResponseDto;
 import com.example.project3.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -284,6 +285,30 @@ public class PostService {
         }
     }
 
+    public List<PostLikedMemberResponseDto> getLikers(Long postId) {
+        // 특정 postId에 대한 PostLiked 정보 가져오기
+        List<PostLiked> postLikedList = postLikedRepository.findByPost_PostId(postId);
 
+        // 결과를 저장할 리스트 초기화
+        List<PostLikedMemberResponseDto> responseDtoList = new ArrayList<>();
 
+        // 각 PostLiked 정보에 대해
+        for (PostLiked postLiked : postLikedList) {
+            // liked가 true인 경우에만 처리
+            if (postLiked.isLiked()) {
+                // 해당 Member 정보 가져오기
+                Member member = postLiked.getMember();
+                // Member 정보를 MemberResponseDto로 변환하여 결과 리스트에 추가
+                PostLikedMemberResponseDto responseDto = PostLikedMemberResponseDto.builder()
+                        .memberId(member.getId())
+                        .name(member.getName())
+                        .imageUrl(member.getImageURL())
+                        .nickName(member.getNickName())
+                        .build();
+                responseDtoList.add(responseDto);
+            }
+        }
+
+        return responseDtoList;
+    }
 }
