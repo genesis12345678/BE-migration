@@ -148,6 +148,24 @@ public class PostController {
                 .body(postsByHashtag);
     }
 
+    // 사용자별 게시글 조회
+    @GetMapping("/posts/user/{userEmail}")
+    public ResponseEntity<Page<PostResponseDto>> getPostsByUser(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable String userEmail,
+            @RequestParam(defaultValue = "" + Long.MAX_VALUE) Long lastPostId,
+            @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC, size = DEFAULT_PAGE_SIZE)
+            Pageable pageable) {
+        log.info("특정 유저가 작성한 게시글 목록 조회 요청이 들어왔습니다.");
+
+        String loggedInUserEmail = (userDetails != null) ? userDetails.getUsername() : null;
+
+        Page<PostResponseDto> postsByUser = postService.getPostsByUser(userEmail, lastPostId, pageable, loggedInUserEmail);
+
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(postsByUser);
+    }
+
 
 
 }
