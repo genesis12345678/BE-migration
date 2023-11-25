@@ -17,7 +17,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.persistence.EntityNotFoundException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -311,4 +313,17 @@ public class PostService {
 
         return responseDtoList;
     }
+
+    @Transactional(readOnly = true)
+    public Page<PostResponseDto> getPostsByHashtag(String hashtag, Long lastPostId, Pageable pageable, String userEmail) {
+        // 특정 해시태그를 포함하는 게시글을 페이징하여 가져오기
+        Page<Post> posts = postRepository.findByPostHashtags_Hashtag_HashtagNameAndPostIdLessThanOrderByCreatedAtDesc(hashtag, lastPostId, pageable);
+        //Page<Post> posts = postRepository.findByHashtagAndPostIdLessThanOrderByCreatedAtDesc(hashtag, lastPostId, pageable);
+
+        // Page<Post>를 Page<PostResponseDto>로 변환
+        Page<PostResponseDto> postResponseDtoPage = posts.map(post -> createPostResponseDto(post, userEmail));
+
+        return postResponseDtoPage;
+    }
+
 }
