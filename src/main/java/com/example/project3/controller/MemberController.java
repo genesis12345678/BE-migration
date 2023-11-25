@@ -12,6 +12,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import java.io.IOException;
 
@@ -40,7 +41,25 @@ public class MemberController {
 
     @GetMapping("/user")
     public ResponseEntity<MemberInfoResponse> getMemberInfo(@AuthenticationPrincipal UserDetails userDetails) {
+        log.info("회원정보 조회 요청이 들어왔습니다.");
         MemberInfoResponse userInfo = memberService.getMemberInfo(userDetails.getUsername());
         return ResponseEntity.ok().body(userInfo);
+    }
+
+    @DeleteMapping("/user")
+    public ResponseEntity<Void> deleteAccount(@AuthenticationPrincipal UserDetails userDetails) {
+        log.info("회원탈퇴 요청이 들어왔습니다.");
+        log.info("email : {}", userDetails.getUsername());
+        memberService.deleteAccount(userDetails.getUsername());
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(@AuthenticationPrincipal UserDetails userDetails , HttpServletRequest request) {
+        log.info("로그아웃 요청이 들어왔습니다.");
+        String accessToken = request.getHeader("Authorization");
+
+        memberService.logout(userDetails, accessToken);
+        return ResponseEntity.ok().build();
     }
 }

@@ -4,6 +4,7 @@ import com.example.project3.dto.oauth2.CustomOAuth2User;
 import com.example.project3.Entity.member.Member;
 import com.example.project3.Entity.member.SocialType;
 import com.example.project3.dto.oauth2.OAuthAttributes;
+import com.example.project3.exception.DuplicateEmailException;
 import com.example.project3.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +17,7 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 @Slf4j
@@ -79,19 +81,24 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
 
     private Member getMember(OAuthAttributes attributes, SocialType socialType) {
 
-            log.info("SocialId : {}", attributes.getOAuth2UserInfo().getId());
-            log.info("SocialTpye : {}", socialType);
+        // TODO : 클라이언트에 에러 응답 연구해봐야함.
 
-            Member member = memberRepository.findBySocialTypeAndSocialId(socialType, attributes.getOAuth2UserInfo().getId()).orElse(null);
+        String email = attributes.getOAuth2UserInfo().getEmail();
 
-        if (member != null) {
-            log.info("getMember() 실행, findBySocialTypeAndSocialId로 찾은 Member : {}", member.getSocialId());
-            return member;
-
-        }
-        log.info("조회되는 member가 없어 saveMember()를 실행합니다.");
-        return saveMember(attributes, socialType);
-
+        return memberRepository.findBySocialTypeAndSocialId(socialType, attributes.getOAuth2UserInfo().getId())
+                .map(member -> {
+                    log.info("findBySocialTypeAndSocialId로 조회된 회원: {}", member.getSocialId());
+                    return member;
+                })
+                .orElseGet(() -> {
+                    if (!memberRepository.existsByEmail(email)) {
+                        log.info("이메일 중복 확인 완료. 새로운 회원을 생성합니다.");
+                        return saveMember(attributes, socialType);
+                    } else {
+                        log.info("이미 가입된 이메일입니다.");
+                        throw new DuplicateEmailException("중복된 이메일입니다: " + email);
+                    }
+                });
     }
 
     private Member saveMember(OAuthAttributes attributes, SocialType socialType) {

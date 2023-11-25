@@ -1,7 +1,9 @@
 package com.example.project3.config.jwt;
 
 import com.example.project3.Entity.member.Member;
+import com.example.project3.exception.BlacklistedException;
 import com.example.project3.service.MemberDetailService;
+import com.example.project3.util.RedisUtil;
 import io.jsonwebtoken.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +27,7 @@ public class TokenProvider {
 
     private final JwtProperties jwtProperties;
     private final MemberDetailService memberDetailService;
+    private final RedisUtil redisUtil;
     private String secretKey;
 
     public static final Duration ACCESS_TOKEN_DURATION = Duration.ofHours(1);
@@ -51,7 +54,6 @@ public class TokenProvider {
                .compact();
     }
 
-    // TODO : 리프레시토큰에다가 member의 email과 id를 꼭 넣어야 할지 고려해봐야함.
     public String createRefreshToken() {
        Date now = new Date();
 
@@ -65,6 +67,11 @@ public class TokenProvider {
 
     public boolean validToken(String token, HttpServletRequest request) {
         try{
+            if (redisUtil.hasKeyBlackList(token)) {
+                log.error("블랙리스트 토큰");
+                request.setAttribute("exception", new BlacklistedException("블랙리스트에 등록된 토큰입니다."));
+                return false;
+            }
             Jwts.parser()
                     .setSigningKey(secretKey)
                     .parseClaimsJws(token);

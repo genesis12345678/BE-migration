@@ -12,6 +12,7 @@ database.db
 .github/workflows/main.yml
 scripts/deploy.sh
 appspec.yml
+logs/test.log
 
 ### STS ###
 .apt_generated
