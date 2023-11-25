@@ -18,5 +18,6 @@ public interface PostRepository  extends JpaRepository<Post, Long> {
 //  @Query("SELECT p FROM Post p JOIN p.postHashtags ph WHERE ph.hashtag.hashtagName = :hashtagName AND p.postId < :lastPostId ORDER BY p.createdAt DESC")
 //  Page<Post> findByHashtagAndPostIdLessThanOrderByCreatedAtDesc(
 //      @Param("hashtagName") String hashtagName, @Param("lastPostId") Long lastPostId, Pageable pageable);
+    Page<Post> findByMember_EmailAndPostIdLessThanOrderByCreatedAtDesc(String userEmail, Long lastPostId, Pageable pageable);
 }
 

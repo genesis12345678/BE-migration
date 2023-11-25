@@ -160,6 +160,7 @@ public class PostService {
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + userEmail))
                 : post.getMember(); // 사용자가 로그인하지 않은 경우 게시글 작성자 정보 사용
 
+
         List<String> mediaUrls = post.getMediaFiles().stream()
                 .map(MediaFile::getFileUrl)
                 .collect(Collectors.toList());
@@ -303,6 +304,7 @@ public class PostService {
                 // Member 정보를 MemberResponseDto로 변환하여 결과 리스트에 추가
                 PostLikedMemberResponseDto responseDto = PostLikedMemberResponseDto.builder()
                         .memberId(member.getId())
+                        .name(member.getEmail())
                         .name(member.getName())
                         .imageUrl(member.getImageURL())
                         .nickName(member.getNickName())
@@ -326,4 +328,15 @@ public class PostService {
         return postResponseDtoPage;
     }
 
+    public Page<PostResponseDto> getPostsByUser(String userEmail, Long lastPostId, Pageable pageable, String loggedInUserEmail) {
+        log.info("찾을유저={}", userEmail);
+        // 특정 유저가 작성한 게시글을 페이징하여 가져오기
+        Page<Post> posts = postRepository.findByMember_EmailAndPostIdLessThanOrderByCreatedAtDesc(userEmail, lastPostId, pageable);
+
+
+        // Page<Post>를 Page<PostResponseDto>로 변환
+        Page<PostResponseDto> postResponseDtoPage = posts.map(post -> createPostResponseDto(post, loggedInUserEmail));
+
+        return postResponseDtoPage;
+    }
 }
