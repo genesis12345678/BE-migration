@@ -111,7 +111,6 @@ public class JwtAuthenticationProcessingFilter extends OncePerRequestFilter {
                 requestURI.equals("/api/signup") ||
                 requestURI.equals("/favicon.ico") ||
                 requestURI.contains("oauth2") ||
-                requestURI.equals("/logout") ||
                 false );
     }
 

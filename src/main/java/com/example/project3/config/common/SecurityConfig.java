@@ -1,6 +1,5 @@
 package com.example.project3.config.common;
 
-import com.example.project3.config.LogoutSuccessHandler;
 import com.example.project3.config.jwt.TokenProvider;
 import com.example.project3.config.login.*;
 import com.example.project3.repository.MemberRepository;
@@ -10,8 +9,10 @@ import com.example.project3.service.MemberService;
 import com.example.project3.service.TokenService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -25,12 +26,14 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.Arrays;
 import java.util.List;
 
 @Configuration
 @EnableWebSecurity(debug = true)
 @RequiredArgsConstructor
+@Slf4j
 public class SecurityConfig{
 
     private final MemberDetailService memberDetailService;
@@ -53,9 +56,7 @@ public class SecurityConfig{
 
                     .and()
 
-                    .exceptionHandling()
-                    .authenticationEntryPoint(authenticationEntryPoint)
-                    .and()
+
 
                     .formLogin().disable()
                     .httpBasic().disable()
@@ -67,6 +68,7 @@ public class SecurityConfig{
 
                     .authorizeRequests()
                     .antMatchers("/","/css/**","/images/**","/js/**","/favicon.ico").permitAll()
+                    .antMatchers(HttpMethod.POST, "/api/post").hasRole("USER")
                     .antMatchers( "/**/signup", "/login","/api/posts/**", "/api/post/*/likers").permitAll()
                     .antMatchers("/api/v2/**", "/swagger-ui.html","/swagger/**",
                                 "/swagger-resources/**","/webjars/**","/v2/api-docs").permitAll()
@@ -74,14 +76,21 @@ public class SecurityConfig{
 
                     .and()
 
+                    .exceptionHandling()
+                            .accessDeniedHandler(((request, response, accessDeniedException) -> {
+                                log.error("접근 권한 부족입니다.");
+                                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                                response.setCharacterEncoding("UTF-8");
+                                response.getWriter().write("접근 권한이 없습니다, 소셜유저 회원가입을 마무리 해야 합니다.");
+                            }))
+                    .authenticationEntryPoint(authenticationEntryPoint)
+
+                    .and()
+
                     .oauth2Login()
                     .successHandler(oAuth2LoginSuccessHandler)
                     .failureHandler(oAuth2LoginFailureHandler)
                     .userInfoEndpoint().userService(customOAuth2UserService);
-
-                    http.logout()
-                        .logoutSuccessHandler(logoutSuccessHandler())
-                        .permitAll();
 
                 http.addFilterAfter(customJsonUsernamePasswordAuthenticationFilter(), LogoutFilter.class);
                 http.addFilterBefore(jwtAuthenticationProcessingFilter(), CustomJsonUsernamePasswordAuthenticationFilter.class);
@@ -141,8 +150,4 @@ public class SecurityConfig{
         return new LoginFailureHandler();
     }
 
-    @Bean
-    public LogoutSuccessHandler logoutSuccessHandler() {
-        return new LogoutSuccessHandler();
-    }
 }

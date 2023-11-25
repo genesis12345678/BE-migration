@@ -1,5 +1,6 @@
 package com.example.project3.controller.advice;
 
+import com.example.project3.exception.BlacklistedException;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.SignatureException;
@@ -30,5 +31,10 @@ public class JwtExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     public String handleIllegalArgumentException(){
         return "토큰 필요";
+    }
+
+    @ExceptionHandler(BlacklistedException.class)
+    public String handleBlacklistedException(){
+        return "서버에서 블랙리스트 처리된 토큰입니다.";
     }
 }

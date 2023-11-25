@@ -1,9 +1,12 @@
 package com.example.project3.Entity.member;
 
+import com.example.project3.Entity.Post;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
 
 
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -45,6 +48,10 @@ public class Member{
 
     private String refreshToken;
 
+    @OneToMany(mappedBy = "member",cascade = CascadeType.ALL)
+    private List<Post> posts = new ArrayList<>();
+
+
     // 자체 회원가입용 빌더
     @Builder
     public Member (String name, String email, String password, String address,
@@ -61,6 +68,10 @@ public class Member{
 
     public void updateRefreshToken(String refreshToken) {
         this.refreshToken = refreshToken;
+    }
+
+    public void clearRefreshToken() {
+        this.refreshToken = null;
     }
 
 

@@ -70,6 +70,9 @@ dependencies {
     // https://mvnrepository.com/artifact/org.hibernate.validator/hibernate-validator
     implementation group: 'org.hibernate.validator', name: 'hibernate-validator', version: '8.0.0.Final'
 
+    // redis 의존성
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
 }
 
     tasks.named('test') {
