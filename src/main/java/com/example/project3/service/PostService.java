@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.persistence.EntityNotFoundException;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -167,13 +168,15 @@ public class PostService {
 
         boolean isPostLiked = userEmail != null && postLikedRepository.existsByPostAndMember(post, member); // 사용자가 로그인하지 않은 경우 좋아요 여부 false로 설정
 
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
         return PostResponseDto.builder()
                 .postId(post.getPostId())
                 .userId(post.getMember().getId())
                 .userImg(post.getMember().getImageURL())
+                .userEmail(post.getMember().getEmail())
                 .userName(post.getMember().getName())
-                .date(post.getCreatedAt())
+                .date(post.getCreatedAt().format(formatter))
                 .location(post.getPostLocation())
                 .temperature(post.getPostTemperature())
                 .mediaUrls(mediaUrls)
