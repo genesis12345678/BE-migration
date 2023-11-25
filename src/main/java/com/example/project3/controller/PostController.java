@@ -123,13 +123,30 @@ public class PostController {
     @GetMapping("/post/{postId}/likers")
     public ResponseEntity<List<PostLikedMemberResponseDto>> getLikes(@PathVariable Long postId) {
 
-        List<PostLikedMemberResponseDto> likedUsers  = postService.getLikers(postId);
+        List<PostLikedMemberResponseDto> likedUsers = postService.getLikers(postId);
 
         return ResponseEntity.status(HttpStatus.OK)
                 .body(likedUsers);
     }
 
 
+    // 해시태그로 게시글 조회
+    @GetMapping("/posts/hashtag/{hashtagName}")
+    public ResponseEntity<Page<PostResponseDto>> getPostsByHashtag3(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable String hashtagName,
+            @RequestParam(defaultValue = "" + Long.MAX_VALUE) Long lastPostId,
+            @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC, size = DEFAULT_PAGE_SIZE)
+            Pageable pageable) {
+        log.info("특정 해시태그가 포함된 게시글 목록 조회 요청이 들어왔습니다.");
+
+        String userEmail = (userDetails != null) ? userDetails.getUsername() : null;
+
+        Page<PostResponseDto> postsByHashtag = postService.getPostsByHashtag(hashtagName, lastPostId, pageable, userEmail);
+
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(postsByHashtag);
+    }
 
 
 
