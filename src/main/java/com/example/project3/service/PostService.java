@@ -304,7 +304,7 @@ public class PostService {
                 // Member 정보를 MemberResponseDto로 변환하여 결과 리스트에 추가
                 PostLikedMemberResponseDto responseDto = PostLikedMemberResponseDto.builder()
                         .memberId(member.getId())
-                        .name(member.getEmail())
+                        .email(member.getEmail())
                         .name(member.getName())
                         .imageUrl(member.getImageURL())
                         .nickName(member.getNickName())
