@@ -358,4 +358,36 @@ public class PostService {
                 .imageUrl(member.getImageURL())
                 .build();
     }
+
+    @Transactional
+    public Long deletePost(Long postId, String userEmail) {
+        // 게시글 조회
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new EntityNotFoundException("Post not found with id: " + postId));
+
+        if (!post.getMember().getEmail().equals(userEmail)) {
+            throw new IllegalArgumentException("해당 게시글을 삭제할 권한이 없습니다.");
+        }
+        // 게시글에 연관된 좋아요 정보 삭제
+        postLikedRepository.deleteByPost(post);
+
+        // 게시글과 연관된 미디어 파일 삭제
+        List<MediaFile> mediaFiles = post.getMediaFiles();
+        for (MediaFile mediaFile : mediaFiles) {
+            // S3에서 파일 삭제
+            s3Uploader.delete(mediaFile.getFileUrl());
+        }
+
+        mediaFileRepository.deleteByPost(post);
+
+        // 게시글과 연관된 해시태그 삭제
+        postHashtagRepository.deleteByPost(post);
+
+        // 게시글 삭제
+        postRepository.deleteById(postId);
+
+        return postId;
+    }
+
+
 }
