@@ -175,8 +175,9 @@ public class PostService {
                 .postId(post.getPostId())
                 .userId(post.getMember().getId())
                 .userImg(post.getMember().getImageURL())
-                .userEmail(post.getMember().getEmail())
                 .userName(post.getMember().getName())
+                .userEmail(post.getMember().getEmail())
+                .nickName(post.getMember().getNickName())
                 .date(post.getCreatedAt().format(formatter))
                 .location(post.getPostLocation())
                 .temperature(post.getPostTemperature())
@@ -351,10 +352,10 @@ public class PostService {
         // MemberInfoPostResponseDto를 만들어서 반환
         return MemberInfoPostResponseDto.builder()
                 .memberId(member.getId())
-                .name(member.getName())
+                .userName(member.getName())
+                .nickName(member.getNickName())
                 .email(member.getEmail())
                 .imageUrl(member.getImageURL())
-                .nickName(member.getNickName())
                 .build();
     }
 }
