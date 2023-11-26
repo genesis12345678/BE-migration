@@ -2,6 +2,7 @@ package com.example.project3.controller;
 
 import com.example.project3.dto.request.PostRequestDto;
 import com.example.project3.dto.request.PostUpdateRequestDto;
+import com.example.project3.dto.response.MemberInfoPostResponseDto;
 import com.example.project3.dto.response.PostLikedMemberResponseDto;
 import com.example.project3.dto.response.PostResponseDto;
 import com.example.project3.service.PostService;
@@ -150,20 +151,39 @@ public class PostController {
 
     // 사용자별 게시글 조회
     @GetMapping("/posts/user/{userEmail}")
-    public ResponseEntity<Page<PostResponseDto>> getPostsByUser(
+    public ResponseEntity<MemberInfoPostResponseDto> getPostsByUser(
             @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable String userEmail,
             @RequestParam(defaultValue = "" + Long.MAX_VALUE) Long lastPostId,
             @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC, size = DEFAULT_PAGE_SIZE)
             Pageable pageable) {
-        log.info("특정 유저가 작성한 게시글 목록 조회 요청이 들어왔습니다.");
+        log.info("사용자별 게시글 조회 요청이 들어왔습니다.");
 
         String loggedInUserEmail = (userDetails != null) ? userDetails.getUsername() : null;
 
         Page<PostResponseDto> postsByUser = postService.getPostsByUser(userEmail, lastPostId, pageable, loggedInUserEmail);
 
+        MemberInfoPostResponseDto memberInfo = postService.getMemberInfo(userEmail);
+
+
         return ResponseEntity.status(HttpStatus.OK)
-                .body(postsByUser);
+                .body(MemberInfoPostResponseDto.builder()
+                        .memberId(memberInfo.getMemberId())
+                        .name(memberInfo.getName())
+                        .email(memberInfo.getEmail())
+                        .imageUrl(memberInfo.getImageUrl())
+                        .nickName(memberInfo.getNickName())
+                        .postResponseDtos(postsByUser.getContent())
+                        .pageable(postsByUser.getPageable())  // 페이징 정보 추가
+                        .last(postsByUser.isLast())
+                        .totalElements(postsByUser.getTotalElements())
+                        .totalPages(postsByUser.getTotalPages())
+                        .size(postsByUser.getSize())
+                        .number(postsByUser.getNumber())
+                        .first(postsByUser.isFirst())
+                        .numberOfElements(postsByUser.getNumberOfElements())
+                        .empty(postsByUser.isEmpty())
+                        .build());
     }
 
 

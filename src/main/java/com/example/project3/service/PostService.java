@@ -4,6 +4,7 @@ import com.example.project3.Entity.*;
 import com.example.project3.Entity.member.Member;
 import com.example.project3.dto.request.PostRequestDto;
 import com.example.project3.dto.request.PostUpdateRequestDto;
+import com.example.project3.dto.response.MemberInfoPostResponseDto;
 import com.example.project3.dto.response.PostLikedMemberResponseDto;
 import com.example.project3.dto.response.PostResponseDto;
 import com.example.project3.repository.*;
@@ -341,5 +342,19 @@ public class PostService {
         Page<PostResponseDto> postResponseDtoPage = posts.map(post -> createPostResponseDto(post, loggedInUserEmail));
 
         return postResponseDtoPage;
+    }
+
+    public MemberInfoPostResponseDto getMemberInfo(String userEmail) {
+        Member member = memberRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + userEmail));
+
+        // MemberInfoPostResponseDto를 만들어서 반환
+        return MemberInfoPostResponseDto.builder()
+                .memberId(member.getId())
+                .name(member.getName())
+                .email(member.getEmail())
+                .imageUrl(member.getImageURL())
+                .nickName(member.getNickName())
+                .build();
     }
 }
