@@ -1,6 +1,7 @@
 package com.example.project3.repository;
 
 import com.example.project3.Entity.MediaFile;
+import com.example.project3.Entity.Post;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -15,4 +16,6 @@ public interface MediaFileRepository extends JpaRepository<MediaFile, Long> {
             "where mf.post.postId = :postId " +
             "and mf.fileUrl = :fileUrl")
     void deleteByPostIdAndFileUrl(@Param("postId") Long postId, @Param("fileUrl") String fileUrl);
+
+    void deleteByPost(Post post);
 }

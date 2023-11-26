@@ -17,5 +17,7 @@ public interface PostHashtagRepository extends JpaRepository<PostHashtag, Long> 
     @Modifying
     @Query("DELETE FROM PostHashtag ph WHERE ph.post.postId = :postId")
     void deleteByPostId(@Param("postId") Long postId);
+
+    void deleteByPost(Post post);
 }
 

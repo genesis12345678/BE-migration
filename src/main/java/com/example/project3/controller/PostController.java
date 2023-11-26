@@ -18,6 +18,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import javax.persistence.EntityNotFoundException;
 import java.util.Collections;
 import java.util.List;
 
@@ -184,6 +185,25 @@ public class PostController {
                         .numberOfElements(postsByUser.getNumberOfElements())
                         .empty(postsByUser.isEmpty())
                         .build());
+    }
+
+    // 게시글 삭제
+    @DeleteMapping("/post/{postId}")
+    public ResponseEntity<String> deletePost(
+            @PathVariable Long postId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        log.info("게시글 삭제 요청이 들어왔습니다.");
+
+        try {
+            Long deletedPostId = postService.deletePost(postId, userDetails.getUsername());
+            return ResponseEntity.status(HttpStatus.OK).body(deletedPostId + " 게시글이 성공적으로 삭제되었습니다.");
+        } catch (EntityNotFoundException e) {
+            log.error("게시글 삭제 실패: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("게시글을 찾을 수 없습니다.");
+        } catch (Exception e) {
+            log.error("게시글 삭제 실패: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("게시글 삭제 중 오류가 발생했습니다.");
+        }
     }
 
 

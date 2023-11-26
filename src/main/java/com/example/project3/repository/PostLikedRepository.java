@@ -18,4 +18,6 @@ public interface PostLikedRepository extends JpaRepository<PostLiked, Long> {
     List<PostLiked> findByPost_PostIdAndLiked(Long postId, boolean liked);
 
     List<PostLiked> findByPost_PostId(Long postId);
+
+    void deleteByPost(Post post);
 }
