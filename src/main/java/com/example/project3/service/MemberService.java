@@ -125,7 +125,10 @@ public class MemberService {
     }
 
     @Transactional
-    public void deleteAccount(String email) {
+    public void deleteAccount(String email, String accessToken) {
+            String token = accessToken.substring(7);
+            redisUtil.setBlackList(token,"accessToken", 5);
+            log.info("액세스 토큰 블랙리스트 추가");
 
         memberRepository.findByEmail(email)
                 .ifPresent(member -> {

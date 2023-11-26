@@ -3,7 +3,6 @@ package com.example.project3.controller;
 import com.example.project3.dto.request.SignupRequest;
 import com.example.project3.dto.response.MemberInfoResponse;
 import com.example.project3.service.MemberService;
-import com.example.project3.service.S3Uploader;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
@@ -16,7 +15,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
-import java.io.IOException;
 
 @RestController
 @Slf4j
@@ -50,10 +48,12 @@ public class MemberController {
     }
 
     @DeleteMapping("/user")
-    public ResponseEntity<Void> deleteAccount(@AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<Void> deleteAccount(@AuthenticationPrincipal UserDetails userDetails, HttpServletRequest request) {
         log.info("회원탈퇴 요청이 들어왔습니다.");
         log.info("email : {}", userDetails.getUsername());
-        memberService.deleteAccount(userDetails.getUsername());
+        String accessToken = request.getHeader("Authorization");
+
+        memberService.deleteAccount(userDetails.getUsername(), accessToken);
         return ResponseEntity.ok().build();
     }
 
