@@ -17,6 +17,7 @@ public class PostResponseDto {
     private String userImg;
     private String userEmail;
     private String userName;
+    private String nickName;
     private String date;
     private String location;
     private Float temperature;

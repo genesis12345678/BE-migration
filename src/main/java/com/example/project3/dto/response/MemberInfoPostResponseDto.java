@@ -13,10 +13,10 @@ import java.util.List;
 public class MemberInfoPostResponseDto {
 
     private Long memberId;
-    private String name;
+    private String userName;
     private String email;
-    private String imageUrl;
     private String nickName;
+    private String imageUrl;
     private List<PostResponseDto> postResponseDtos;
     // 페이징 정보 추가
     private Pageable pageable;

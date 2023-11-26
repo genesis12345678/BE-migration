@@ -169,10 +169,10 @@ public class PostController {
         return ResponseEntity.status(HttpStatus.OK)
                 .body(MemberInfoPostResponseDto.builder()
                         .memberId(memberInfo.getMemberId())
-                        .name(memberInfo.getName())
+                        .userName(memberInfo.getUserName())
                         .email(memberInfo.getEmail())
-                        .imageUrl(memberInfo.getImageUrl())
                         .nickName(memberInfo.getNickName())
+                        .imageUrl(memberInfo.getImageUrl())
                         .postResponseDtos(postsByUser.getContent())
                         .pageable(postsByUser.getPageable())  // 페이징 정보 추가
                         .last(postsByUser.isLast())
