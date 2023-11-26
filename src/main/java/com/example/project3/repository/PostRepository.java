@@ -12,7 +12,7 @@ import java.util.List;
 public interface PostRepository  extends JpaRepository<Post, Long> {
     Page<Post> findByPostIdLessThanOrderByCreatedAtDesc(Long lastPostId, Pageable pageable);
 
-    List<Post> findByMemberIdOrderByCreatedAtDesc(Long memberId);
+    Page<Post> findByMemberIdOrderByCreatedAtDesc(Long memberId, Pageable pageable);
     Page<Post> findByPostHashtags_Hashtag_HashtagNameAndPostIdLessThanOrderByCreatedAtDesc(
             String hashtagName, Long lastPostId, Pageable pageable);
 //  @Query("SELECT p FROM Post p JOIN p.postHashtags ph WHERE ph.hashtag.hashtagName = :hashtagName AND p.postId < :lastPostId ORDER BY p.createdAt DESC")

@@ -14,6 +14,8 @@ import com.example.project3.repository.PostRepository;
 import com.example.project3.util.RedisUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -27,7 +29,6 @@ import javax.servlet.http.HttpServletResponse;
 import javax.transaction.Transactional;
 import java.io.IOException;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -100,15 +101,13 @@ public class MemberService {
         tokenService.sendAccessAndRefreshToken(response, accessToken, refreshToken);
     }
 
-    public MemberInfoResponse getMemberInfo(String username) {
+    public MemberInfoResponse getMemberInfo(String username, Pageable pageable) {
 
         Member member = memberRepository.findByEmail(username)
                 .orElseThrow(EntityNotFoundException::new);
 
-        List<SimplifiedPostResponse> simplifiedPosts = postRepository.findByMemberIdOrderByCreatedAtDesc(member.getId())
-                .stream()
-                .map(SimplifiedPostResponse::new)
-                .collect(Collectors.toList());
+        Page<SimplifiedPostResponse> simplifiedPosts = postRepository.findByMemberIdOrderByCreatedAtDesc(member.getId(), pageable)
+                .map(SimplifiedPostResponse::new);
 
         return MemberInfoResponse.builder()
                 .memberId(member.getId())
@@ -120,7 +119,7 @@ public class MemberService {
                 .nickName(member.getNickName())
                 .socialId(member.getSocialId())
                 .socialType(member.getSocialType())
-                .simplifiedPostResponseList(simplifiedPosts)
+                .simplifiedPostResponseList(simplifiedPosts.getContent())
                 .build();
 
     }

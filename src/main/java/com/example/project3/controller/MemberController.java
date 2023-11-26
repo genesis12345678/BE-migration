@@ -6,6 +6,8 @@ import com.example.project3.service.MemberService;
 import com.example.project3.service.S3Uploader;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -40,9 +42,10 @@ public class MemberController {
 
 
     @GetMapping("/user")
-    public ResponseEntity<MemberInfoResponse> getMemberInfo(@AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<MemberInfoResponse> getMemberInfo(@AuthenticationPrincipal UserDetails userDetails
+    ,@PageableDefault Pageable pageable) {
         log.info("회원정보 조회 요청이 들어왔습니다.");
-        MemberInfoResponse userInfo = memberService.getMemberInfo(userDetails.getUsername());
+        MemberInfoResponse userInfo = memberService.getMemberInfo(userDetails.getUsername(), pageable);
         return ResponseEntity.ok().body(userInfo);
     }
 
