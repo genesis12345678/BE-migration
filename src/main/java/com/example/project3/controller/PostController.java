@@ -151,10 +151,10 @@ public class PostController {
     }
 
     // 사용자별 게시글 조회
-    @GetMapping("/posts/user/{userEmail}")
+    @GetMapping("/posts/user/{nickName}")
     public ResponseEntity<MemberInfoPostResponseDto> getPostsByUser(
             @AuthenticationPrincipal UserDetails userDetails,
-            @PathVariable String userEmail,
+            @PathVariable String nickName,
             @RequestParam(defaultValue = "" + Long.MAX_VALUE) Long lastPostId,
             @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC, size = DEFAULT_PAGE_SIZE)
             Pageable pageable) {
@@ -162,9 +162,9 @@ public class PostController {
 
         String loggedInUserEmail = (userDetails != null) ? userDetails.getUsername() : null;
 
-        Page<PostResponseDto> postsByUser = postService.getPostsByUser(userEmail, lastPostId, pageable, loggedInUserEmail);
+        Page<PostResponseDto> postsByUser = postService.getPostsByUser(nickName, lastPostId, pageable, loggedInUserEmail);
 
-        MemberInfoPostResponseDto memberInfo = postService.getMemberInfo(userEmail);
+        MemberInfoPostResponseDto memberInfo = postService.getMemberInfo(nickName);
 
 
         return ResponseEntity.status(HttpStatus.OK)
