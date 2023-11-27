@@ -214,9 +214,9 @@ public class PostService {
 
         // 기존 이미지와 넘어온 이미지 비교
         List<String> updateOriginalImages = request.getOriginalImages();
-        List<String> productImages = getExistingImageUrls(post.getMediaFiles());
+        List<String> postImages = getExistingImageUrls(post.getMediaFiles());
         // 원래 있던 이미지에서 빠진 이미지를 찾아냄
-        List<String> removeImages = pickUpRemoveProductImages(productImages, updateOriginalImages);
+        List<String> removeImages = pickUpRemovePostImages(postImages, updateOriginalImages);
 
         // 레파지토리에서 이미지 삭제, S3에서 빠진 이미지 파일 삭제
         for (String deletedImage : removeImages) {
@@ -242,7 +242,7 @@ public class PostService {
                 .map(MediaFile::getFileUrl)
                 .collect(Collectors.toList());
     }
-    private List<String> pickUpRemoveProductImages(List<String> originImage, List<String> updateImage) {
+    private List<String> pickUpRemovePostImages(List<String> originImage, List<String> updateImage) {
         return originImage.stream()
                 .filter(image -> !updateImage.contains(image))
                 .collect(Collectors.toList());
@@ -333,11 +333,10 @@ public class PostService {
         return postResponseDtoPage;
     }
 
-    public Page<PostResponseDto> getPostsByUser(String userEmail, Long lastPostId, Pageable pageable, String loggedInUserEmail) {
-        log.info("찾을유저={}", userEmail);
+    public Page<PostResponseDto> getPostsByUser(String nickName, Long lastPostId, Pageable pageable, String loggedInUserEmail) {
+        log.info("찾을유저={}", nickName);
         // 특정 유저가 작성한 게시글을 페이징하여 가져오기
-        Page<Post> posts = postRepository.findByMember_EmailAndPostIdLessThanOrderByCreatedAtDesc(userEmail, lastPostId, pageable);
-
+        Page<Post> posts = postRepository.findByMember_NickNameAndPostIdLessThanOrderByCreatedAtDesc(nickName, lastPostId, pageable);
 
         // Page<Post>를 Page<PostResponseDto>로 변환
         Page<PostResponseDto> postResponseDtoPage = posts.map(post -> createPostResponseDto(post, loggedInUserEmail));
@@ -345,9 +344,9 @@ public class PostService {
         return postResponseDtoPage;
     }
 
-    public MemberInfoPostResponseDto getMemberInfo(String userEmail) {
-        Member member = memberRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + userEmail));
+    public MemberInfoPostResponseDto getMemberInfo(String nickName) {
+        Member member = memberRepository.findByNickName(nickName)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with nickName: " + nickName));
 
         // MemberInfoPostResponseDto를 만들어서 반환
         return MemberInfoPostResponseDto.builder()
