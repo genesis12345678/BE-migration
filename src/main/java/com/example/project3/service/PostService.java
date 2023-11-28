@@ -292,13 +292,14 @@ public class PostService {
             existingPostHashtags.add(postHashtag);
         }
     }
-
     public List<PostLikedMemberResponseDto> getLikers(Long postId) {
         // 특정 postId에 대한 PostLiked 정보 가져오기
         List<PostLiked> postLikedList = postLikedRepository.findByPost_PostId(postId);
 
         // 결과를 저장할 리스트 초기화
         List<PostLikedMemberResponseDto> responseDtoList = new ArrayList<>();
+
+        int count = 0;
 
         // 각 PostLiked 정보에 대해
         for (PostLiked postLiked : postLikedList) {
@@ -315,6 +316,12 @@ public class PostService {
                         .nickName(member.getNickName())
                         .build();
                 responseDtoList.add(responseDto);
+
+                // 30명까지만 추가하도록 수정
+                count++;
+                if (count >= 30) {
+                    break;
+                }
             }
         }
 
