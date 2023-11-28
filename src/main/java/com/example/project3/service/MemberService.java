@@ -56,7 +56,7 @@ public class MemberService {
                 .orElseGet(() -> {
                     try {
 
-                        String imageURL = (!file.isEmpty()) ? s3Uploader.uploadProfileImage(file) : DEFAULT_IMAGE_URL;
+                        String imageURL = (file != null && !file.isEmpty()) ? s3Uploader.uploadProfileImage(file) : DEFAULT_IMAGE_URL;
 
                         memberRepository.save(Member.builder()
                                 .name(request.getUserName())
