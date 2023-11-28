@@ -36,9 +36,10 @@ public class MemberController {
 
     private final MemberService memberService;
 
-    @ApiOperation(value = "회원가입", notes = "multipart/form-data로 파일과 회원가입 JSON데이터를 요청한다.\n" +
-                                    "request는 content-type을 \"applcation/json\"으로 명시해주어야 한다.\n" +
-                                    "Swagger로는 요청하기 힘든 듯")
+    @ApiOperation(value = "회원가입", notes = "multipart/form-data로 프로필 이미지로 사용할 파일과 회원가입 JSON데이터를 요청한다.\n" +
+                                            "이미지파일은 요청 안 하면 서버에서 기본 이미지로 저장한다.\n" +
+                                            "회원가입 요청 데이터는 content-type을 \"applcation/json\"으로 명시해주어야 한다.\n" +
+                                            "(Swagger로는 요청하기 힘든 듯)")
     @ApiResponses({
             @ApiResponse(code = 409, message = "Email already exists"),
             @ApiResponse(code = 200, message = "Signup Successful")
@@ -71,9 +72,8 @@ public class MemberController {
     }
 
 
-    // TODO : 회원정보 조회에 인증이 필요할까
     @ApiOperation(value = "회원 정보 조회(토큰 필요)", notes = "기본적인 회원 정보와 등록했던 글 응답\n" +
-                                                  "default 페이징사이즈 : 10")
+                                                           "페이징 가능, default 페이징사이즈 : 10")
     @ApiImplicitParams({
             @ApiImplicitParam(name = "page", dataType = "integer", paramType = "query",
                     value = "페이지 번호 (0부터 시작)"),
@@ -90,7 +90,7 @@ public class MemberController {
 
 
     @ApiOperation(value = "회원탈퇴(토큰 필요)", notes = "DB에서 회원 정보와 등록했던 글 영구적으로 삭제\n" +
-                                             "사용한 액세스 토큰은 다시는 사용 불가능")
+                                                      "사용한 액세스 토큰은 다시는 사용 불가능")
     @DeleteMapping("/user")
     public ResponseEntity<Void> deleteAccount(@ApiIgnore @AuthenticationPrincipal UserDetails userDetails,
                                               HttpServletRequest request) {
@@ -127,9 +127,9 @@ public class MemberController {
         else return ResponseEntity.ok().build();
     }
 
-    @ApiOperation(value = "회원정보 수정(토큰 필요)", notes = "multipart/form-data로 파일과 회원정보 수정 JSON데이터를 요청한다.\n" +
-                                                 "request는 content-type을 \"applcation/json\"으로 명시해주어야 한다.\n" +
-                                                 "Swagger로는 요청하기 힘든 듯")
+    @ApiOperation(value = "회원정보 수정(토큰 필요)", notes = "multipart/form-data로 이미지 파일과 회원정보 수정 JSON데이터를 요청한다.\n" +
+                                                 "회원정보 수정 요청 데이터는 content-type을 \"applcation/json\"으로 명시해주어야 한다.\n" +
+                                                 "(Swagger로는 요청하기 힘든 듯)")
     @ApiImplicitParams({
             @ApiImplicitParam(name = "request", value = "회원정보 수정 요청(application/json)", required = true,
                     dataType = "UpdateUserInfoRequest", paramType = "form", example =
