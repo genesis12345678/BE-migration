@@ -5,7 +5,7 @@ import com.example.project3.Entity.member.Member;
 import com.example.project3.Entity.member.Role;
 import com.example.project3.config.jwt.TokenProvider;
 import com.example.project3.dto.request.SignupRequest;
-import com.example.project3.dto.request.SocialUserSignupRequest;
+import com.example.project3.dto.request.UpdateUserInfoRequest;
 import com.example.project3.dto.response.MemberInfoResponse;
 import com.example.project3.dto.response.SimplifiedPostResponse;
 import com.example.project3.exception.FileUploadException;
@@ -72,7 +72,7 @@ public class MemberService {
 
                     } catch (IOException e) {
                         log.error("파일 업로드 중 오류 발생");
-                        throw new FileUploadException("파일 업로드 중 오류 발생", e);
+                        throw new FileUploadException(e.getMessage());
                     }
 
                     return new ResponseEntity<>("Signup Successful", HttpStatus.OK);
@@ -80,7 +80,7 @@ public class MemberService {
     }
 
 
-    public void signupSocialUser(String token, SocialUserSignupRequest request, HttpServletResponse response) {
+    public void signupSocialUser(String token, UpdateUserInfoRequest request, HttpServletResponse response) {
         log.info("소셜 유저 회원가입 실행");
 
         String email = tokenProvider.getMemberEmail(token);
@@ -179,6 +179,34 @@ public class MemberService {
         } catch (Exception e) {
             log.error("로그아웃 중 오류 발생: {}", e.getMessage(), e);
         }
+    }
+
+    public boolean checkDuplicateNickname(String nickName) {
+        return memberRepository.existsByNickName(nickName);
+    }
+
+    @Transactional
+    public void updateUserInfo(String email, UpdateUserInfoRequest request, MultipartFile file){
+        log.info("회원정보 수정을 시도합니다.");
+
+            memberRepository.findByEmail(email)
+                    .ifPresent(member -> {
+                        String address = request.getAddress();
+                        String nickName = request.getNickName();
+                        String message = request.getMessage();
+                        String imageUrl;
+                        try {
+                            if (!file.isEmpty()) {
+                                s3Uploader.delete(member.getImageURL());
+                                imageUrl = s3Uploader.uploadProfileImage(file);
+                            } else imageUrl = null;
+                            member.updateUserInfo(address, nickName, message, imageUrl);
+                            log.info("회원정보가 변경되었습니다.");
+                        } catch (IOException e) {
+                            log.error("파일 업로드 중 에러 발생");
+                            throw new FileUploadException(e.getMessage());
+                        }
+                    });
     }
 }
 
