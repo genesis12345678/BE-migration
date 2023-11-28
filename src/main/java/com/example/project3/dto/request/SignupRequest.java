@@ -1,9 +1,6 @@
 package com.example.project3.dto.request;
 
 import lombok.*;
-import org.springframework.web.bind.annotation.RequestPart;
-import org.springframework.web.multipart.MultipartFile;
-
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Pattern;
@@ -11,7 +8,7 @@ import javax.validation.constraints.Pattern;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class SignupRequest {
+public class SignupRequest extends UpdateUserInfoRequest{
 
     @NotBlank(message = "Username is required") // "", " ", null 허용 안함.
     private String userName;
@@ -25,10 +22,12 @@ public class SignupRequest {
             message = "8 ~ 20자, 최소 한개의 특수문자와 숫자, 영문 알파벳을 포함해야 함.")
     private String password;
 
-    @NotBlank(message = "Address is required")
-    private String address;
 
-    private String nickName;
-
-    private String message;
+    // 테스트 코드용
+    public SignupRequest(String username, String email, String password, String address, String nickName, String message) {
+        super(address,nickName,message);
+        this.password = password;
+        this.userName = username;
+        this.email = email;
+    }
 }

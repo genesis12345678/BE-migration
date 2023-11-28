@@ -1,22 +1,16 @@
 package com.example.project3.config.common;
 
-import com.example.project3.Entity.member.Member;
 import com.example.project3.config.jwt.TokenProvider;
-import com.example.project3.dto.request.SocialUserSignupRequest;
-import com.example.project3.repository.MemberRepository;
+import com.example.project3.dto.request.UpdateUserInfoRequest;
 import com.example.project3.service.MemberService;
 import com.example.project3.service.TokenService;
-import com.fasterxml.jackson.core.exc.StreamReadException;
-import com.fasterxml.jackson.databind.DatabindException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.mapping.GrantedAuthoritiesMapper;
 import org.springframework.security.core.authority.mapping.NullAuthoritiesMapper;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -25,7 +19,6 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.Collection;
 
 /**
  * 출처 : https://ksh-coding.tistory.com/59#2.%20JWT%20%EC%9D%B8%EC%A6%9D%20%ED%95%84%ED%84%B0%20-%20JwtAuthenticationProcessingFilter-1
@@ -109,6 +102,7 @@ public class JwtAuthenticationProcessingFilter extends OncePerRequestFilter {
                 requestURI.equals("/") ||
                 requestURI.equals("/csrf") ||
                 requestURI.equals("/api/signup") ||
+                requestURI.startsWith("/api/user/") ||
                 requestURI.equals("/favicon.ico") ||
                 requestURI.contains("oauth2") ||
                 false );
@@ -117,7 +111,7 @@ public class JwtAuthenticationProcessingFilter extends OncePerRequestFilter {
     private void handleSignupRequest(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) {
         try{
             ObjectMapper objectMapper = new ObjectMapper();
-            SocialUserSignupRequest signupRequest = objectMapper.readValue(request.getReader(), SocialUserSignupRequest.class);
+            UpdateUserInfoRequest signupRequest = objectMapper.readValue(request.getReader(), UpdateUserInfoRequest.class);
             log.info("요청 : {}", signupRequest);
 
 

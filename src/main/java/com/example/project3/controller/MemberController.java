@@ -1,12 +1,15 @@
 package com.example.project3.controller;
 
 import com.example.project3.dto.request.SignupRequest;
+import com.example.project3.dto.request.UpdateUserInfoRequest;
 import com.example.project3.dto.response.MemberInfoResponse;
 import com.example.project3.service.MemberService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -63,6 +66,27 @@ public class MemberController {
         String accessToken = request.getHeader("Authorization");
 
         memberService.logout(userDetails, accessToken);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/user/{nickName}")
+    public ResponseEntity<Void> isDuplicatedNickname(@PathVariable String nickName) {
+        log.info("닉네임 중복확인 요청이 들어왔습니다.");
+
+        if (memberService.checkDuplicateNickname(nickName)) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
+        }
+        else return ResponseEntity.ok().build();
+    }
+
+    @PatchMapping("/user")
+    public ResponseEntity<Void> updateUserInfo(@AuthenticationPrincipal UserDetails userDetails,
+                                               @RequestPart(value = "request",required = false) UpdateUserInfoRequest request,
+                                               @RequestPart(value = "file",required = false) MultipartFile file) {
+        log.info("회원정보 수정 요청이 들어왔습니다.");
+        String email = userDetails.getUsername();
+        memberService.updateUserInfo(email, request, file);
+
         return ResponseEntity.ok().build();
     }
 }

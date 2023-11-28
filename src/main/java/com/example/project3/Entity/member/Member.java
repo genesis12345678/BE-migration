@@ -33,6 +33,7 @@ public class Member{
 
     private String imageURL;
 
+    @Column(unique = true)
     private String nickName;
 
     private String message;
@@ -82,8 +83,18 @@ public class Member{
         log.info("nickName : {}", nickName);
         this.message = (message != null) ? message : this.message;
         this.address = (address != null) ? address : this.address;
-        this.nickName =(nickName != null) ? nickName : this.nickName;
+        this.nickName = (nickName != null) ? nickName : this.nickName;
         this.role = Role.USER;
     }
 
+    public void updateUserInfo(String address, String nickName, String message, String imageUrl) {
+        log.info("updateUserInfo() 실행");
+        log.info("message : {}", message);
+        log.info("address : {}", address);
+        log.info("nickName : {}", nickName);
+        this.message = (!message.isBlank()) ? message : this.message;
+        this.address = (!address.isBlank()) ? address : this.address;
+        this.nickName = (!nickName.isBlank()) ? nickName : this.nickName;
+        this.imageURL = (imageUrl != null) ? imageUrl : this.imageURL;
+    }
 }
