@@ -188,25 +188,32 @@ public class MemberService {
     @Transactional
     public void updateUserInfo(String email, UpdateUserInfoRequest request, MultipartFile file){
         log.info("회원정보 수정을 시도합니다.");
+        log.info("email : {}", email);
+        log.info("request : {}", request);
+        log.info("file : {}", file.getOriginalFilename());
 
-            memberRepository.findByEmail(email)
-                    .ifPresent(member -> {
-                        String address = request.getAddress();
-                        String nickName = request.getNickName();
-                        String message = request.getMessage();
-                        String imageUrl;
-                        try {
-                            if (!file.isEmpty()) {
+        memberRepository.findByEmail(email)
+                .ifPresent(member -> {
+                    String address = request.getAddress();
+                    String nickName = request.getNickName();
+                    String message = request.getMessage();
+                    String imageUrl;
+                    try {
+                        if (file != null && !file.isEmpty()) {
+                            if(!member.getImageURL().equals(DEFAULT_IMAGE_URL)) {
                                 s3Uploader.delete(member.getImageURL());
-                                imageUrl = s3Uploader.uploadProfileImage(file);
-                            } else imageUrl = null;
-                            member.updateUserInfo(address, nickName, message, imageUrl);
-                            log.info("회원정보가 변경되었습니다.");
-                        } catch (IOException e) {
-                            log.error("파일 업로드 중 에러 발생");
-                            throw new FileUploadException(e.getMessage());
+                            }
+                            imageUrl = s3Uploader.uploadProfileImage(file);
+                        } else {
+                            imageUrl = null;
                         }
-                    });
+                        member.updateUserInfo(address, nickName, message, imageUrl);
+                        log.info("회원정보가 변경되었습니다.");
+                    } catch (IOException e) {
+                        log.error("파일 업로드 중 에러 발생");
+                        throw new FileUploadException(e.getMessage());
+                    }
+                });
     }
 }
 
