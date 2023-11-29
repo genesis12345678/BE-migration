@@ -1,15 +1,19 @@
 package com.example.project3.controller;
 
 import com.example.project3.Entity.member.Member;
+import com.example.project3.Entity.member.Role;
 import com.example.project3.controller.MemberControllerTest.LoginRequest;
 import com.example.project3.dto.request.SignupRequest;
+import com.example.project3.dto.request.UpdateUserInfoRequest;
 import com.example.project3.dto.response.MemberInfoResponse;
 import com.example.project3.repository.MemberRepository;
 import com.example.project3.service.MemberService;
 import com.example.project3.service.S3Uploader;
 import com.example.project3.util.RedisUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,18 +21,28 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.filter.CharacterEncodingFilter;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.util.Optional;
+
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -58,8 +72,9 @@ public class MemberTest {
 
     private SignupRequest signupRequest;
 
+    // TODO : 파일 저장하는 법
     @BeforeEach
-    void set() {
+    void set() throws Exception {
          signupRequest = SignupRequest.builder()
                                        .email("test@test.com")
                                        .message("한줄메시지")
@@ -68,10 +83,7 @@ public class MemberTest {
                                        .username("사용자1")
                                        .address("서울특별시")
                                        .build();
-
-        MockMultipartFile file = new MockMultipartFile("file", "image.jpg", "image/jpeg","content".getBytes());
-
-        memberService.signup(signupRequest, file);
+        memberService.signup(signupRequest, null);
     }
 
     @AfterEach
@@ -86,9 +98,7 @@ public class MemberTest {
     @Test
     void 로그아웃() throws Exception {
         // given
-        MvcResult result = getResult();
-
-        String accessToken = result.getResponse().getHeader("Authorization_Access_Token");
+        String accessToken = getAccessToken();
 
         // then
         mockMvc.perform(post("/api/logout")
@@ -99,8 +109,7 @@ public class MemberTest {
 
         // 검증: 로그아웃 이후의 동작 확인
         // 1. RefreshToken 비워지는지 확인
-        String email = "test@test.com";
-        Member member = memberRepository.findByEmail(email).orElse(null);
+        Member member = memberRepository.findByEmail(signupRequest.getEmail()).orElse(null);
 
         assertThat(member).isNotNull();
         assertThat(member.getRefreshToken()).isNull();
@@ -117,9 +126,7 @@ public class MemberTest {
     @Test
     void 회원정보_조회() throws Exception {
         // given
-        MvcResult result = getResult();
-
-        String accessToken = result.getResponse().getHeader("Authorization_Access_Token");
+        String accessToken = getAccessToken();
 
         // when
         MvcResult memberInfoResult = mockMvc.perform(get("/api/user")
@@ -144,37 +151,82 @@ public class MemberTest {
     }
 
 
+    @Test
+    void 회원탈퇴() throws Exception {
+        // given
+        String accessToken = getAccessToken();
+
+        // when
+         mockMvc.perform(delete("/api/user")
+                .header("Authorization", accessToken)
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        // then
+
+        Member member = memberRepository.findByEmail(signupRequest.getEmail()).orElse(null);
+        assertThat(member).isNull();
+
+        assertThat(accessToken).isNotNull();
+        assertThat(redisUtil.hasKeyBlackList(accessToken.substring(7))).isTrue();
+    }
+
+    @Test
+    void 회원정보_수정() throws Exception {
+        // given
+        String accessToken = getAccessToken();
+
+        UpdateUserInfoRequest updateUserInfoRequest = new UpdateUserInfoRequest("인천광역시", "별명3", "좋아요");
+        final String requestBody = objectMapper.writeValueAsString(updateUserInfoRequest);
+
+        MockMultipartFile request = new MockMultipartFile("request", "","application/json", requestBody.getBytes());
+        MockMultipartFile file = new MockMultipartFile("file", "image.jpg", "image/jpeg","content".getBytes());
 
 
 
+        // when
+       mockMvc.perform(multipart(HttpMethod.PATCH, "/api/user")
+              .file(file)
+              .file(request)
+              .header("Authorization", accessToken)
+              .contentType(MediaType.MULTIPART_FORM_DATA)
+              .accept(MediaType.APPLICATION_JSON))
+              .andExpect(status().isOk())
+              .andReturn();
+
+        // then
+        memberRepository.findByEmail(signupRequest.getEmail())
+                .ifPresent(member -> {
+                    assertThat(member.getAddress()).isEqualTo(updateUserInfoRequest.getAddress());
+                    assertThat(member.getNickName()).isEqualTo(updateUserInfoRequest.getNickName());
+                    assertThat(member.getMessage()).isEqualTo(updateUserInfoRequest.getMessage());
+                });
+    }
+
+    @Test
+    void 닉네임_중복_확인() throws Exception {
+        // given
+        String checkNickname = "별명1";
+        // when
+        // 닉네임 중복인 경우
+        mockMvc.perform(post("/api/user/{nickName}",checkNickname))
+                .andExpect(status().isConflict());
+        // then
+        // 중복되지 않은 경우
+        mockMvc.perform(post("/api/user/{nickName}","별명3"))
+                .andExpect(status().isOk());
+    }
 
 
 
+    @Nullable
+    private String getAccessToken() throws Exception {
+        MvcResult result = getResult();
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        String accessToken = result.getResponse().getHeader("Authorization_Access_Token");
+        return accessToken;
+    }
 
 
     @NotNull
