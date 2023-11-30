@@ -1,6 +1,7 @@
 package com.example.project3.service.mainApiService;
 
 import org.json.JSONObject;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.BufferedReader;
@@ -11,7 +12,8 @@ import java.net.URL;
 @Service
 public class WeatherService {
 
-    private final String apiKey = "744ee23bf2d30944d099b1f6566a9202";
+    @Value("${open.weather.api.key}")
+    private String apiKey;
 
     public JSONObject getWeather(String city, String country) {
         try {
