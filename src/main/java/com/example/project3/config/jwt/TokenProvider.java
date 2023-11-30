@@ -2,6 +2,7 @@ package com.example.project3.config.jwt;
 
 import com.example.project3.Entity.member.Member;
 import com.example.project3.exception.BlacklistedException;
+import com.example.project3.exception.MissingTokenException;
 import com.example.project3.service.MemberDetailService;
 import com.example.project3.util.RedisUtil;
 import io.jsonwebtoken.*;
@@ -89,7 +90,7 @@ public class TokenProvider {
             log.error("토큰 서명이 유효하지 않습니다. 에러 메시지: {}", e.getMessage());
             return false;
         } catch (IllegalArgumentException e) {
-            request.setAttribute("exception", e);
+            request.setAttribute("exception", new MissingTokenException("서버에서 토큰이 추출되지 않습니다."));
             log.error("JWT 파싱 에러 : {}", e.getMessage());
             return false;
         }

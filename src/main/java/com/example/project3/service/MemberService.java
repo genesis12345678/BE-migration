@@ -9,6 +9,7 @@ import com.example.project3.dto.request.UpdateUserInfoRequest;
 import com.example.project3.dto.response.MemberInfoResponse;
 import com.example.project3.dto.response.SimplifiedPostResponse;
 import com.example.project3.exception.FileUploadException;
+import com.example.project3.exception.MissingFileException;
 import com.example.project3.repository.MemberRepository;
 import com.example.project3.repository.PostRepository;
 import com.example.project3.util.RedisUtil;
@@ -201,7 +202,9 @@ public class MemberService {
                     try {
                         if (file != null && !file.isEmpty()) {
                             if(!member.getImageURL().equals(DEFAULT_IMAGE_URL)) {
-                                s3Uploader.delete(member.getImageURL());
+                                if(!(member.getImageURL().contains("kakao") || member.getImageURL().contains("google"))) {
+                                    s3Uploader.delete(member.getImageURL());
+                                }
                             }
                             imageUrl = s3Uploader.uploadProfileImage(file);
                         } else {
@@ -212,6 +215,9 @@ public class MemberService {
                     } catch (IOException e) {
                         log.error("파일 업로드 중 에러 발생");
                         throw new FileUploadException(e.getMessage());
+                    } catch (IllegalArgumentException e){
+                        log.error("버킷에 파일이 존재하지 않습니다.");
+                        throw new MissingFileException("버킷에 파일이 존재하지 않습니다.");
                     }
                 });
     }
