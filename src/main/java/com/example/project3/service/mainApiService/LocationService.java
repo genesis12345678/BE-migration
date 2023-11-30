@@ -1,6 +1,5 @@
 package com.example.project3.service.mainApiService;
 
-import com.example.project3.dto.response.LocationResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import reactor.core.publisher.Mono;
