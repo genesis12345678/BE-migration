@@ -4,6 +4,7 @@ import com.example.project3.Entity.*;
 import com.example.project3.Entity.member.Member;
 import com.example.project3.dto.request.PostRequestDto;
 import com.example.project3.dto.request.PostUpdateRequestDto;
+import com.example.project3.dto.response.MemberInfoPostResponseDto;
 import com.example.project3.dto.response.PostLikedMemberResponseDto;
 import com.example.project3.dto.response.PostResponseDto;
 import com.example.project3.repository.*;
@@ -17,7 +18,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.persistence.EntityNotFoundException;
-import java.util.*;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -158,19 +162,23 @@ public class PostService {
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + userEmail))
                 : post.getMember(); // 사용자가 로그인하지 않은 경우 게시글 작성자 정보 사용
 
+
         List<String> mediaUrls = post.getMediaFiles().stream()
                 .map(MediaFile::getFileUrl)
                 .collect(Collectors.toList());
 
         boolean isPostLiked = userEmail != null && postLikedRepository.existsByPostAndMember(post, member); // 사용자가 로그인하지 않은 경우 좋아요 여부 false로 설정
 
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
         return PostResponseDto.builder()
                 .postId(post.getPostId())
                 .userId(post.getMember().getId())
                 .userImg(post.getMember().getImageURL())
                 .userName(post.getMember().getName())
-                .date(post.getCreatedAt())
+                .userEmail(post.getMember().getEmail())
+                .nickName(post.getMember().getNickName())
+                .date(post.getCreatedAt().format(formatter))
                 .location(post.getPostLocation())
                 .temperature(post.getPostTemperature())
                 .mediaUrls(mediaUrls)
@@ -206,9 +214,9 @@ public class PostService {
 
         // 기존 이미지와 넘어온 이미지 비교
         List<String> updateOriginalImages = request.getOriginalImages();
-        List<String> productImages = getExistingImageUrls(post.getMediaFiles());
+        List<String> postImages = getExistingImageUrls(post.getMediaFiles());
         // 원래 있던 이미지에서 빠진 이미지를 찾아냄
-        List<String> removeImages = pickUpRemoveProductImages(productImages, updateOriginalImages);
+        List<String> removeImages = pickUpRemovePostImages(postImages, updateOriginalImages);
 
         // 레파지토리에서 이미지 삭제, S3에서 빠진 이미지 파일 삭제
         for (String deletedImage : removeImages) {
@@ -234,7 +242,7 @@ public class PostService {
                 .map(MediaFile::getFileUrl)
                 .collect(Collectors.toList());
     }
-    private List<String> pickUpRemoveProductImages(List<String> originImage, List<String> updateImage) {
+    private List<String> pickUpRemovePostImages(List<String> originImage, List<String> updateImage) {
         return originImage.stream()
                 .filter(image -> !updateImage.contains(image))
                 .collect(Collectors.toList());
@@ -284,13 +292,14 @@ public class PostService {
             existingPostHashtags.add(postHashtag);
         }
     }
-
     public List<PostLikedMemberResponseDto> getLikers(Long postId) {
         // 특정 postId에 대한 PostLiked 정보 가져오기
         List<PostLiked> postLikedList = postLikedRepository.findByPost_PostId(postId);
 
         // 결과를 저장할 리스트 초기화
         List<PostLikedMemberResponseDto> responseDtoList = new ArrayList<>();
+
+        int count = 0;
 
         // 각 PostLiked 정보에 대해
         for (PostLiked postLiked : postLikedList) {
@@ -301,14 +310,90 @@ public class PostService {
                 // Member 정보를 MemberResponseDto로 변환하여 결과 리스트에 추가
                 PostLikedMemberResponseDto responseDto = PostLikedMemberResponseDto.builder()
                         .memberId(member.getId())
+                        .email(member.getEmail())
                         .name(member.getName())
                         .imageUrl(member.getImageURL())
                         .nickName(member.getNickName())
                         .build();
                 responseDtoList.add(responseDto);
+
+                // 30명까지만 추가하도록 수정
+                count++;
+                if (count >= 30) {
+                    break;
+                }
             }
         }
 
         return responseDtoList;
     }
+
+    @Transactional(readOnly = true)
+    public Page<PostResponseDto> getPostsByHashtag(String hashtag, Long lastPostId, Pageable pageable, String userEmail) {
+        // 특정 해시태그를 포함하는 게시글을 페이징하여 가져오기
+        Page<Post> posts = postRepository.findByPostHashtags_Hashtag_HashtagNameAndPostIdLessThanOrderByCreatedAtDesc(hashtag, lastPostId, pageable);
+        //Page<Post> posts = postRepository.findByHashtagAndPostIdLessThanOrderByCreatedAtDesc(hashtag, lastPostId, pageable);
+
+        // Page<Post>를 Page<PostResponseDto>로 변환
+        Page<PostResponseDto> postResponseDtoPage = posts.map(post -> createPostResponseDto(post, userEmail));
+
+        return postResponseDtoPage;
+    }
+
+    public Page<PostResponseDto> getPostsByUser(String nickName, Long lastPostId, Pageable pageable, String loggedInUserEmail) {
+        log.info("찾을유저={}", nickName);
+        // 특정 유저가 작성한 게시글을 페이징하여 가져오기
+        Page<Post> posts = postRepository.findByMember_NickNameAndPostIdLessThanOrderByCreatedAtDesc(nickName, lastPostId, pageable);
+
+        // Page<Post>를 Page<PostResponseDto>로 변환
+        Page<PostResponseDto> postResponseDtoPage = posts.map(post -> createPostResponseDto(post, loggedInUserEmail));
+
+        return postResponseDtoPage;
+    }
+
+    public MemberInfoPostResponseDto getMemberInfo(String nickName) {
+        Member member = memberRepository.findByNickName(nickName)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with nickName: " + nickName));
+
+        // MemberInfoPostResponseDto를 만들어서 반환
+        return MemberInfoPostResponseDto.builder()
+                .memberId(member.getId())
+                .userName(member.getName())
+                .nickName(member.getNickName())
+                .email(member.getEmail())
+                .imageUrl(member.getImageURL())
+                .build();
+    }
+
+    @Transactional
+    public Long deletePost(Long postId, String userEmail) {
+        // 게시글 조회
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new EntityNotFoundException("Post not found with id: " + postId));
+
+        if (!post.getMember().getEmail().equals(userEmail)) {
+            throw new IllegalArgumentException("해당 게시글을 삭제할 권한이 없습니다.");
+        }
+        // 게시글에 연관된 좋아요 정보 삭제
+        postLikedRepository.deleteByPost(post);
+
+        // 게시글과 연관된 미디어 파일 삭제
+        List<MediaFile> mediaFiles = post.getMediaFiles();
+        for (MediaFile mediaFile : mediaFiles) {
+            // S3에서 파일 삭제
+            s3Uploader.delete(mediaFile.getFileUrl());
+        }
+
+        mediaFileRepository.deleteByPost(post);
+
+        // 게시글과 연관된 해시태그 삭제
+        postHashtagRepository.deleteByPost(post);
+
+        // 게시글 삭제
+        postRepository.deleteById(postId);
+
+        return postId;
+    }
+
+
 }

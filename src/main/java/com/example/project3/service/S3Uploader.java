@@ -27,14 +27,15 @@ public class S3Uploader {
 
     @Value("${cloud.aws.s3.bucketName}")
     private String bucketName;
-    private final String dirName = "sns";
+    private static final String DIR_SNS = "sns";
+    private static final String DIR_PROFILE_IMAGE = "ProfileImage";
 
 
     private final AmazonS3Client amazonS3Client;
 
     public String uploadProfileImage(MultipartFile file) throws IOException {
         if (isImageFile(file)) {
-            return upload(file);
+            return upload1(file, DIR_PROFILE_IMAGE);
         } else {
             log.error("이미지 파일이 아닙니다.");
             throw new NotImageFileException("Unsupported file type");
@@ -57,7 +58,7 @@ public class S3Uploader {
             if (file != null) {
                 try {
                     //String fileUrl = upload(file);
-                    String fileUrl = upload1(file, dirName);
+                    String fileUrl = upload1(file, DIR_SNS);
                     fileUrls.add(fileUrl);
 
                 } catch (Exception e) {
@@ -147,6 +148,16 @@ public class S3Uploader {
 
 
     public void delete(String s3FileName) {
+
+        String dirName;
+        if (s3FileName.contains(DIR_PROFILE_IMAGE)) {
+            dirName = DIR_PROFILE_IMAGE;
+        } else if (s3FileName.contains(DIR_SNS)) {
+            dirName = DIR_SNS;
+        } else {
+            throw new IllegalArgumentException("Invalid S3 file name: " + s3FileName);
+        }
+
         String bucketPath = dirName + "/";
         String fileName = extractFileNameFromUrl(s3FileName);
         String filePath = bucketPath + fileName;

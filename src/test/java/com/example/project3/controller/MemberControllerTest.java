@@ -137,8 +137,9 @@ public class MemberControllerTest {
         SignupRequest request = new SignupRequest(username, email, password,
                 address, nickName, message);
 
+        MockMultipartFile file = null;
         // when
-        memberService.signup(request, null);
+        memberService.signup(request, file);
 
         Member member = memberRepository.findByEmail(request.getEmail()).get();
 
@@ -210,7 +211,7 @@ public class MemberControllerTest {
 
     @AllArgsConstructor
     @Getter
-    private class LoginRequest {
+    public static class LoginRequest {
         private String email;
         private String password;
     }

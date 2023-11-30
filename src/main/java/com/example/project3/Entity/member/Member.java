@@ -1,9 +1,12 @@
 package com.example.project3.Entity.member;
 
+import com.example.project3.Entity.Post;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
 
 
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -30,6 +33,7 @@ public class Member{
 
     private String imageURL;
 
+    @Column(unique = true)
     private String nickName;
 
     private String message;
@@ -44,6 +48,10 @@ public class Member{
     private String socialId;
 
     private String refreshToken;
+
+    @OneToMany(mappedBy = "member",cascade = CascadeType.ALL)
+    private List<Post> posts = new ArrayList<>();
+
 
     // 자체 회원가입용 빌더
     @Builder
@@ -63,6 +71,10 @@ public class Member{
         this.refreshToken = refreshToken;
     }
 
+    public void clearRefreshToken() {
+        this.refreshToken = null;
+    }
+
 
     public void signupSocialUser(String message, String address, String nickName) {
         log.info("signupSocialUser() 실행");
@@ -71,8 +83,18 @@ public class Member{
         log.info("nickName : {}", nickName);
         this.message = (message != null) ? message : this.message;
         this.address = (address != null) ? address : this.address;
-        this.nickName =(nickName != null) ? nickName : this.nickName;
+        this.nickName = (nickName != null) ? nickName : this.nickName;
         this.role = Role.USER;
     }
 
+    public void updateUserInfo(String address, String nickName, String message, String imageUrl) {
+        log.info("updateUserInfo() 실행");
+        log.info("message : {}", message);
+        log.info("address : {}", address);
+        log.info("nickName : {}", nickName);
+        this.message = (!message.isBlank()) ? message : this.message;
+        this.address = (!address.isBlank()) ? address : this.address;
+        this.nickName = (!nickName.isBlank()) ? nickName : this.nickName;
+        this.imageURL = (imageUrl != null) ? imageUrl : this.imageURL;
+    }
 }

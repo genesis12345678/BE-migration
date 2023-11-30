@@ -6,6 +6,7 @@ import com.example.project3.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityNotFoundException;
 import javax.servlet.http.HttpServletResponse;
@@ -67,6 +68,7 @@ public class TokenService {
         log.info("Access Token, Refresh Token 헤더 설정 완료");
     }
 
+    @Transactional
     public void updateRefreshToken(String email, String refreshToken) {
 
         getMember(email).updateRefreshToken(refreshToken);

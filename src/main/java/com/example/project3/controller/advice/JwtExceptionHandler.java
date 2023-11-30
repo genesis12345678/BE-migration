@@ -1,5 +1,7 @@
 package com.example.project3.controller.advice;
 
+import com.example.project3.exception.BlacklistedException;
+import com.example.project3.exception.MissingTokenException;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.SignatureException;
@@ -27,8 +29,13 @@ public class JwtExceptionHandler {
         return "토큰이 만료되었습니다.";
     }
 
-    @ExceptionHandler(IllegalArgumentException.class)
+    @ExceptionHandler(MissingTokenException.class)
     public String handleIllegalArgumentException(){
-        return "토큰 필요";
+        return "해당 요청은 토큰이 요구됩니다.";
+    }
+
+    @ExceptionHandler(BlacklistedException.class)
+    public String handleBlacklistedException(){
+        return "서버에서 블랙리스트 처리된 토큰입니다.";
     }
 }
