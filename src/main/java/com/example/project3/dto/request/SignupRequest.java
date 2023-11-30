@@ -28,7 +28,7 @@ public class SignupRequest extends UpdateUserInfoRequest{
             message = "8 ~ 20자, 최소 한개의 특수문자와 숫자, 영문 알파벳을 포함해야 함.")
     private String password;
 
-
+    @Builder
     // 테스트 코드용
     public SignupRequest(String username, String email, String password, String address, String nickName, String message) {
         super(address,nickName,message);

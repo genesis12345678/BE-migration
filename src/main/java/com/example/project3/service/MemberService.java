@@ -9,6 +9,7 @@ import com.example.project3.dto.request.UpdateUserInfoRequest;
 import com.example.project3.dto.response.MemberInfoResponse;
 import com.example.project3.dto.response.SimplifiedPostResponse;
 import com.example.project3.exception.FileUploadException;
+import com.example.project3.exception.MissingFileException;
 import com.example.project3.repository.MemberRepository;
 import com.example.project3.repository.PostRepository;
 import com.example.project3.util.RedisUtil;
@@ -56,7 +57,7 @@ public class MemberService {
                 .orElseGet(() -> {
                     try {
 
-                        String imageURL = (!file.isEmpty()) ? s3Uploader.uploadProfileImage(file) : DEFAULT_IMAGE_URL;
+                        String imageURL = (file != null && !file.isEmpty()) ? s3Uploader.uploadProfileImage(file) : DEFAULT_IMAGE_URL;
 
                         memberRepository.save(Member.builder()
                                 .name(request.getUserName())
@@ -188,25 +189,37 @@ public class MemberService {
     @Transactional
     public void updateUserInfo(String email, UpdateUserInfoRequest request, MultipartFile file){
         log.info("회원정보 수정을 시도합니다.");
+        log.info("email : {}", email);
+        log.info("request : {}", request);
+        log.info("file : {}", file.getOriginalFilename());
 
-            memberRepository.findByEmail(email)
-                    .ifPresent(member -> {
-                        String address = request.getAddress();
-                        String nickName = request.getNickName();
-                        String message = request.getMessage();
-                        String imageUrl;
-                        try {
-                            if (!file.isEmpty()) {
-                                s3Uploader.delete(member.getImageURL());
-                                imageUrl = s3Uploader.uploadProfileImage(file);
-                            } else imageUrl = null;
-                            member.updateUserInfo(address, nickName, message, imageUrl);
-                            log.info("회원정보가 변경되었습니다.");
-                        } catch (IOException e) {
-                            log.error("파일 업로드 중 에러 발생");
-                            throw new FileUploadException(e.getMessage());
+        memberRepository.findByEmail(email)
+                .ifPresent(member -> {
+                    String address = request.getAddress();
+                    String nickName = request.getNickName();
+                    String message = request.getMessage();
+                    String imageUrl;
+                    try {
+                        if (file != null && !file.isEmpty()) {
+                            if(!member.getImageURL().equals(DEFAULT_IMAGE_URL)) {
+                                if(!(member.getImageURL().contains("kakao") || member.getImageURL().contains("google"))) {
+                                    s3Uploader.delete(member.getImageURL());
+                                }
+                            }
+                            imageUrl = s3Uploader.uploadProfileImage(file);
+                        } else {
+                            imageUrl = null;
                         }
-                    });
+                        member.updateUserInfo(address, nickName, message, imageUrl);
+                        log.info("회원정보가 변경되었습니다.");
+                    } catch (IOException e) {
+                        log.error("파일 업로드 중 에러 발생");
+                        throw new FileUploadException(e.getMessage());
+                    } catch (IllegalArgumentException e){
+                        log.error("버킷에 파일이 존재하지 않습니다.");
+                        throw new MissingFileException("버킷에 파일이 존재하지 않습니다.");
+                    }
+                });
     }
 }
 
