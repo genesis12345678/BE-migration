@@ -216,12 +216,17 @@ public class PostService {
         List<String> updateOriginalImages = request.getOriginalImages();
         List<String> postImages = getExistingImageUrls(post.getMediaFiles());
         // 원래 있던 이미지에서 빠진 이미지를 찾아냄
-        List<String> removeImages = pickUpRemovePostImages(postImages, updateOriginalImages);
+        //List<String> removeImages = pickUpRemovePostImages(postImages, updateOriginalImages);
+        List<String> removeImages = (postImages != null)
+                ? pickUpRemovePostImages(postImages, updateOriginalImages)
+                : Collections.emptyList();
 
         // 레파지토리에서 이미지 삭제, S3에서 빠진 이미지 파일 삭제
-        for (String deletedImage : removeImages) {
-            mediaFileRepository.deleteByPostIdAndFileUrl(postId, deletedImage);
-            s3Uploader.delete(deletedImage);
+        if (!removeImages.isEmpty()) {
+            for (String deletedImage : removeImages) {
+                mediaFileRepository.deleteByPostIdAndFileUrl(postId, deletedImage);
+                s3Uploader.delete(deletedImage);
+            }
         }
 
         // 새로운 이미지 파일 추가
@@ -384,10 +389,10 @@ public class PostService {
             s3Uploader.delete(mediaFile.getFileUrl());
         }
 
-        mediaFileRepository.deleteByPost(post);
+        //mediaFileRepository.deleteByPost(post);
 
         // 게시글과 연관된 해시태그 삭제
-        postHashtagRepository.deleteByPost(post);
+        //postHashtagRepository.deleteByPost(post);
 
         // 게시글 삭제
         postRepository.deleteById(postId);
