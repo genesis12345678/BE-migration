@@ -1,6 +1,6 @@
 package com.example.project3.dto.response;
 
-import com.example.project3.entity.main.CmmMsgHeader;
+import com.example.project3.Entity.main.CmmMsgHeader;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
