@@ -1,11 +1,11 @@
-package com.example.project3.Entity;
+package com.example.project3.entity;
 
-import com.example.project3.Entity.member.Member;
+import com.example.project3.entity.member.Member;
 import lombok.*;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor

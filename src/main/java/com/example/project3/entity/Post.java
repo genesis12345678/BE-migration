@@ -1,13 +1,13 @@
-package com.example.project3.Entity;
+package com.example.project3.entity;
 
-import com.example.project3.Entity.member.Member;
+import com.example.project3.entity.member.Member;
 import com.example.project3.dto.request.PostUpdateRequestDto;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;

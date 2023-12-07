@@ -1,8 +1,7 @@
 package com.example.project3.controller;
 
-import com.example.project3.Entity.member.Member;
-import com.example.project3.Entity.member.Role;
-import com.example.project3.controller.MemberControllerTest.LoginRequest;
+import com.example.project3.entity.member.Member;
+import com.example.project3.controller.SignupTest.LoginRequest;
 import com.example.project3.dto.request.SignupRequest;
 import com.example.project3.dto.request.UpdateUserInfoRequest;
 import com.example.project3.dto.response.MemberInfoResponse;
@@ -11,7 +10,6 @@ import com.example.project3.service.MemberService;
 import com.example.project3.service.S3Uploader;
 import com.example.project3.util.RedisUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.AfterEach;
@@ -25,21 +23,11 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.filter.CharacterEncodingFilter;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -224,8 +212,7 @@ public class MemberTest {
     private String getAccessToken() throws Exception {
         MvcResult result = getResult();
 
-        String accessToken = result.getResponse().getHeader("Authorization_Access_Token");
-        return accessToken;
+        return result.getResponse().getHeader("Authorization_Access_Token");
     }
 
 

@@ -8,6 +8,7 @@ import com.example.project3.service.MemberDetailService;
 import com.example.project3.service.MemberService;
 import com.example.project3.service.TokenService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
@@ -18,6 +19,9 @@ import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.FormLoginConfigurer;
+import org.springframework.security.config.annotation.web.configurers.HttpBasicConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -26,7 +30,6 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.Arrays;
 import java.util.List;
 
@@ -47,54 +50,55 @@ public class SecurityConfig{
     private final CustomOAuth2UserService customOAuth2UserService;
     private final AuthenticationEntryPoint authenticationEntryPoint;
 
+    private static final String[] AUTH_WHITELIST = {
+            "/api/v3/**",  "/v3/api-docs/**",
+            "/swagger-resources/**",  "/swagger-ui/**",
+            "/swagger-ui.html",  "/webjars/**",
+            "/",  "/css/**",  "/index.html",  "/js/**",  "/favicon.ico",
+            "/login",  "/api/signup",  "/api/user/**",
+            "/api/posts/**",  "/api/post/**/likers"
+    };
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-                    http
-                    .csrf().disable()
-                    .cors().configurationSource(corsConfigurationSource())
 
-                    .and()
+        http
+                .httpBasic(HttpBasicConfigurer::disable)
+                .csrf(AbstractHttpConfigurer::disable)
+                .formLogin(FormLoginConfigurer::disable)
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .cors(corsConfigurer -> corsConfigurer.configurationSource(corsConfigurationSource()));
 
-                    .formLogin().disable()
-                    .httpBasic().disable()
+        http
+                .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers(AUTH_WHITELIST).permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/post").hasRole("USER")
+                        .requestMatchers(HttpMethod.PATCH, "/api/user").authenticated()
+                        .anyRequest().authenticated());
 
-                    .sessionManagement()
-                    .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
 
-                    .and()
+        http
+                .exceptionHandling(exceptionHandlingConfigurer -> exceptionHandlingConfigurer.accessDeniedHandler(
+                       ((request, response, accessDeniedException) -> {
+                           log.error("접근 권한 부족입니다.");
+                           response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                           response.setCharacterEncoding("UTF-8");
+                           response.getWriter().write("접근 권한이 없습니다, 소셜유저 회원가입을 마무리 해야 합니다.");
+                       })).authenticationEntryPoint(authenticationEntryPoint));
 
-                    .authorizeRequests()
-                    .antMatchers("/","/css/**","/images/**","/js/**","/favicon.ico").permitAll()
-                    .antMatchers(HttpMethod.POST, "/api/post").hasRole("USER")
-                    .antMatchers(HttpMethod.PATCH, "/api/user").authenticated()
-                    .antMatchers( "/**/signup", "/login","/api/posts/**", "/api/post/*/likers", "/api/user/**").permitAll()
-                    .antMatchers("/api/v2/**", "/swagger-ui.html","/swagger/**",
-                                "/swagger-resources/**","/webjars/**","/v2/api-docs").permitAll()
-                    .anyRequest().authenticated()
 
-                    .and()
+        http
+                .oauth2Login(OAuth2LoginConfigurer -> OAuth2LoginConfigurer
+                .successHandler(oAuth2LoginSuccessHandler)
+                .failureHandler(oAuth2LoginFailureHandler)
+                .userInfoEndpoint(UserInfoEndpointConfig-> UserInfoEndpointConfig
+                .userService(customOAuth2UserService)));
 
-                    .exceptionHandling()
-                            .accessDeniedHandler(((request, response, accessDeniedException) -> {
-                                log.error("접근 권한 부족입니다.");
-                                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-                                response.setCharacterEncoding("UTF-8");
-                                response.getWriter().write("접근 권한이 없습니다, 소셜유저 회원가입을 마무리 해야 합니다.");
-                            }))
-                    .authenticationEntryPoint(authenticationEntryPoint)
 
-                    .and()
+        http    .addFilterAfter(customJsonUsernamePasswordAuthenticationFilter(), LogoutFilter.class);
+        http    .addFilterBefore(jwtAuthenticationProcessingFilter(), CustomJsonUsernamePasswordAuthenticationFilter.class);
 
-                    .oauth2Login()
-                    .successHandler(oAuth2LoginSuccessHandler)
-                    .failureHandler(oAuth2LoginFailureHandler)
-                    .userInfoEndpoint().userService(customOAuth2UserService);
-
-                http.addFilterAfter(customJsonUsernamePasswordAuthenticationFilter(), LogoutFilter.class);
-                http.addFilterBefore(jwtAuthenticationProcessingFilter(), CustomJsonUsernamePasswordAuthenticationFilter.class);
-
-                   return  http.build();
+       return  http.build();
     }
 
     @Bean

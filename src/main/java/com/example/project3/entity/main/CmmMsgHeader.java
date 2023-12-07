@@ -1,4 +1,4 @@
-package com.example.project3.Entity.main;
+package com.example.project3.entity.main;
 
 import lombok.Getter;
 import lombok.Setter;

@@ -1,7 +1,7 @@
 package com.example.project3.repository;
 
-import com.example.project3.Entity.member.Member;
-import com.example.project3.Entity.member.SocialType;
+import com.example.project3.entity.member.Member;
+import com.example.project3.entity.member.SocialType;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

@@ -1,10 +1,10 @@
-package com.example.project3.Entity;
+package com.example.project3.entity;
 
 import lombok.*;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 @Builder
 @Entity

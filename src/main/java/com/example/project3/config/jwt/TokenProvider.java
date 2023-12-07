@@ -1,11 +1,12 @@
 package com.example.project3.config.jwt;
 
-import com.example.project3.Entity.member.Member;
+import com.example.project3.entity.member.Member;
 import com.example.project3.exception.BlacklistedException;
 import com.example.project3.exception.MissingTokenException;
 import com.example.project3.service.MemberDetailService;
 import com.example.project3.util.RedisUtil;
 import io.jsonwebtoken.*;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -14,8 +15,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import java.time.Duration;
 import java.util.Base64;
 import java.util.Collection;

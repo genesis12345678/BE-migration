@@ -1,10 +1,10 @@
-package com.example.project3.Entity.member;
+package com.example.project3.entity.member;
 
-import com.example.project3.Entity.Post;
+import com.example.project3.entity.Post;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -88,10 +88,6 @@ public class Member{
     }
 
     public void updateUserInfo(String address, String nickName, String message, String imageUrl) {
-        log.info("updateUserInfo() 실행");
-        log.info("message : {}", message);
-        log.info("address : {}", address);
-        log.info("nickName : {}", nickName);
         this.message = (!message.isBlank()) ? message : this.message;
         this.address = (!address.isBlank()) ? address : this.address;
         this.nickName = (!nickName.isBlank()) ? nickName : this.nickName;

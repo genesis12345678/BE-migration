@@ -1,8 +1,8 @@
 package com.example.project3.repository.main;
 
 
-import com.example.project3.Entity.main.Clothes;
-import com.example.project3.Entity.member.Member;
+import com.example.project3.entity.main.Clothes;
+import com.example.project3.entity.member.Member;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

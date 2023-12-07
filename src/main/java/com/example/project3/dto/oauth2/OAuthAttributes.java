@@ -1,8 +1,8 @@
 package com.example.project3.dto.oauth2;
 
-import com.example.project3.Entity.member.Member;
-import com.example.project3.Entity.member.Role;
-import com.example.project3.Entity.member.SocialType;
+import com.example.project3.entity.member.Member;
+import com.example.project3.entity.member.Role;
+import com.example.project3.entity.member.SocialType;
 import com.example.project3.util.PasswordUtil;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

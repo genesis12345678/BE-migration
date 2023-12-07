@@ -14,10 +14,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import javax.servlet.FilterChain;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 /**
@@ -38,13 +38,11 @@ import java.io.IOException;
 @Slf4j
 public class JwtAuthenticationProcessingFilter extends OncePerRequestFilter {
 
-    private static final String NO_CHECK_URL = "/login"; // "/login"으로 들어오는 요청은 Filter 작동 X
+    private final static String NO_CHECK_URL = "/login"; // "/login"으로 들어오는 요청은 Filter 작동 X
 
     private final TokenService tokenService;
     private final TokenProvider tokenProvider;
     private final MemberService memberService;
-
-    private final GrantedAuthoritiesMapper authoritiesMapper = new NullAuthoritiesMapper();
 
     private final static String HEADER_AUTHORIZATION = "Authorization";
     private final static String HEADER_REFRESH_TOKEN_AUTHORIZATION = "Authorization_Refresh_Token";
@@ -92,13 +90,11 @@ public class JwtAuthenticationProcessingFilter extends OncePerRequestFilter {
     private boolean isPublicUrl(String requestURI) {
 
         return  requestURI != null && (
-                requestURI.startsWith("/api/v2/") ||
-                requestURI.equals("/swagger-ui.html") ||
-                requestURI.startsWith("/swagger/") ||
-                requestURI.equals("/swagger-resources") ||
-                requestURI.startsWith("/swagger-resources/") ||
+                requestURI.startsWith("/api/v3/") ||
+                requestURI.startsWith("/v3/api-docs/") ||
+                requestURI.contains("swagger")||
                 requestURI.startsWith("/webjars/") ||
-                requestURI.equals("/v2/api-docs") ||
+                requestURI.equals("/v3/api-docs") ||
                 requestURI.equals("/") ||
                 requestURI.equals("/csrf") ||
                 requestURI.equals("/api/signup") ||

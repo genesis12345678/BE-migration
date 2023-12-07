@@ -1,6 +1,6 @@
 package com.example.project3.dto.oauth2;
 
-import com.example.project3.Entity.member.Role;
+import com.example.project3.entity.member.Role;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.core.user.DefaultOAuth2User;

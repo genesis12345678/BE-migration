@@ -1,8 +1,8 @@
 package com.example.project3.service;
 
-import com.example.project3.Entity.MediaFile;
-import com.example.project3.Entity.member.Member;
-import com.example.project3.Entity.member.Role;
+import com.example.project3.entity.MediaFile;
+import com.example.project3.entity.member.Member;
+import com.example.project3.entity.member.Role;
 import com.example.project3.config.jwt.TokenProvider;
 import com.example.project3.dto.request.SignupRequest;
 import com.example.project3.dto.request.UpdateUserInfoRequest;
@@ -25,9 +25,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.persistence.EntityNotFoundException;
-import javax.servlet.http.HttpServletResponse;
-import javax.transaction.Transactional;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.transaction.Transactional;
 import java.io.IOException;
 import java.util.List;
 
@@ -183,6 +183,7 @@ public class MemberService {
     }
 
     public boolean checkDuplicateNickname(String nickName) {
+        log.info("확인할 nickName : {}", nickName);
         return memberRepository.existsByNickName(nickName);
     }
 

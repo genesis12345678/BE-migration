@@ -1,8 +1,8 @@
 package com.example.project3.repository;
 
-import com.example.project3.Entity.member.Member;
-import com.example.project3.Entity.Post;
-import com.example.project3.Entity.PostLiked;
+import com.example.project3.entity.member.Member;
+import com.example.project3.entity.Post;
+import com.example.project3.entity.PostLiked;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

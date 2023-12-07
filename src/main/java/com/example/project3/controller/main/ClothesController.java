@@ -1,7 +1,7 @@
 package com.example.project3.controller.main;
 
 
-import com.example.project3.Entity.main.Weather;
+import com.example.project3.entity.main.Weather;
 import com.example.project3.service.mainApiService.ClothesService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
