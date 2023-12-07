@@ -1,6 +1,6 @@
 package com.example.project3.repository;
 
-import com.example.project3.Entity.Post;
+import com.example.project3.entity.Post;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

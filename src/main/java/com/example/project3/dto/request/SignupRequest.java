@@ -1,28 +1,28 @@
 package com.example.project3.dto.request;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import lombok.*;
-import javax.validation.constraints.Email;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Pattern;
 
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@ApiModel(value = "회원가입 요청 정보")
+@Schema(name = "회원가입 요청 정보")
+@ToString
 public class SignupRequest extends UpdateUserInfoRequest{
 
-    @ApiModelProperty(value = "이름", required = true, example = "사용자1")
+    @Schema(description = "이름", example = "사용자1")
     @NotBlank(message = "Username is required") // "", " ", null 허용 안함.
     private String userName;
 
-    @ApiModelProperty(value = "이메일(유효성 검사 : 이메일 형식)", required = true, example = "test@email.com")
+    @Schema(description = "이메일(유효성 검사 : 이메일 형식)",  example = "test@email.com")
     @NotBlank(message = "Email is required") // "", " ", null 허용 안함.
     @Email(message = "이메일 형식을 맞춰주세요.")
     private String email;
 
-    @ApiModelProperty(value = "비밀번호(유효성 검사 : 8 ~ 20자, 최소 한개의 특수문자와 숫자, 영문 알파벳을 포함)", required = true, example = "password12@")
+    @Schema(description = "비밀번호(유효성 검사 : 8 ~ 20자, 최소 한개의 특수문자와 숫자, 영문 알파벳을 포함)", example = "password12@")
     @NotBlank(message = "Password is required")
     @Pattern(regexp = "^(?=.*[0-9])(?=.*[!@#$%^&*?])(?=.*[a-zA-Z]).{8,20}$",
             message = "8 ~ 20자, 최소 한개의 특수문자와 숫자, 영문 알파벳을 포함해야 함.")

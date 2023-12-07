@@ -1,8 +1,6 @@
 package com.example.project3.service;
 
-import com.example.project3.Entity.member.Member;
 import com.example.project3.repository.MemberRepository;
-import com.example.project3.util.PasswordUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.User;

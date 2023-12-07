@@ -1,7 +1,7 @@
 package com.example.project3.service;
 
-import com.example.project3.Entity.*;
-import com.example.project3.Entity.member.Member;
+import com.example.project3.entity.*;
+import com.example.project3.entity.member.Member;
 import com.example.project3.dto.request.PostRequestDto;
 import com.example.project3.dto.request.PostUpdateRequestDto;
 import com.example.project3.dto.response.MemberInfoPostResponseDto;
@@ -17,7 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.persistence.EntityNotFoundException;
+import jakarta.persistence.EntityNotFoundException;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;

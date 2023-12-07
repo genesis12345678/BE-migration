@@ -1,7 +1,7 @@
 package com.example.project3.controller;
 
-import com.example.project3.Entity.member.Member;
-import com.example.project3.Entity.member.Role;
+import com.example.project3.entity.member.Member;
+import com.example.project3.entity.member.Role;
 import com.example.project3.config.jwt.JwtProperties;
 import com.example.project3.repository.MemberRepository;
 import com.example.project3.service.TokenService;

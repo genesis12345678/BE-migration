@@ -1,8 +1,8 @@
 package com.example.project3.service;
 
 import com.example.project3.dto.oauth2.CustomOAuth2User;
-import com.example.project3.Entity.member.Member;
-import com.example.project3.Entity.member.SocialType;
+import com.example.project3.entity.member.Member;
+import com.example.project3.entity.member.SocialType;
 import com.example.project3.dto.oauth2.OAuthAttributes;
 import com.example.project3.exception.DuplicateEmailException;
 import com.example.project3.repository.MemberRepository;
@@ -18,7 +18,6 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 
 @Slf4j

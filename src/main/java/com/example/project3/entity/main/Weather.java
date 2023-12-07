@@ -1,10 +1,10 @@
-package com.example.project3.Entity.main;
+package com.example.project3.entity.main;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.util.Date;
 
 @Entity

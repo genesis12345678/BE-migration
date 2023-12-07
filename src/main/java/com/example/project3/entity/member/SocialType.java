@@ -1,4 +1,4 @@
-package com.example.project3.Entity.member;
+package com.example.project3.entity.member;
 
 public enum SocialType {
     KAKAO, GOOGLE

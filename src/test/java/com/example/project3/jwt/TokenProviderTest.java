@@ -1,7 +1,7 @@
 package com.example.project3.jwt;
 
-import com.example.project3.Entity.member.Member;
-import com.example.project3.Entity.member.Role;
+import com.example.project3.entity.member.Member;
+import com.example.project3.entity.member.Role;
 import com.example.project3.config.jwt.JwtProperties;
 import com.example.project3.config.jwt.TokenProvider;
 import com.example.project3.repository.MemberRepository;
@@ -16,7 +16,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import java.time.Duration;
 import java.util.Base64;
 import java.util.Date;

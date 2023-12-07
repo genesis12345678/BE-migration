@@ -8,8 +8,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -48,7 +48,6 @@ public class LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
         log.info("인증 정보에서 추출된 userEmail : {}", userDetails.getUsername());
         log.info("인증 정보에서 추출된 authorities : {}",  userDetails.getAuthorities());
-        log.info("인증 정보에서 추출된 password : {} ", userDetails.getPassword());
 
         return userDetails.getUsername();
     }

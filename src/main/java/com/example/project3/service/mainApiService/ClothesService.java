@@ -1,7 +1,7 @@
 package com.example.project3.service.mainApiService;
 
 
-import com.example.project3.Entity.main.Weather;
+import com.example.project3.entity.main.Weather;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;

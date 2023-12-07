@@ -1,6 +1,6 @@
 package com.example.project3.service;
 
-import com.example.project3.Entity.member.Member;
+import com.example.project3.entity.member.Member;
 import com.example.project3.config.jwt.TokenProvider;
 import com.example.project3.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
@@ -8,8 +8,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.persistence.EntityNotFoundException;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.servlet.http.HttpServletResponse;
 
 @RequiredArgsConstructor
 @Service
