@@ -86,9 +86,9 @@
 
 
 
-- **언어** : JAVA 11
+- **언어** : JAVA 17
 - **개발환경** : IntelliJ
-- **프레임워크** : Springboot 2.7.17
+- **프레임워크** : Springboot 3.2.0
 - **버전 관리** : GIT
 - **데이터 관리** : MySQL workbench
 - **주요 라이브러리**
@@ -98,4 +98,5 @@
   - Amazon S3
   - Redis
   - Geolocation
+  - Swagger(springdoc-openapi)
 
