@@ -6,10 +6,7 @@ import com.example.project3.dto.response.MemberInfoPostResponseDto;
 import com.example.project3.dto.response.PostLikedMemberResponseDto;
 import com.example.project3.dto.response.PostResponseDto;
 import com.example.project3.service.PostService;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -22,27 +19,20 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
-import jakarta.persistence.EntityNotFoundException;
 import java.util.Collections;
 import java.util.List;
-@Api(tags = "게시글 관리")
+
 @Slf4j
 @RequiredArgsConstructor
 @RequestMapping("/api")
 @RestController
-public class PostController {
+public class PostController implements PostApi {
 
     private final PostService postService;
 
     public static final int DEFAULT_PAGE_SIZE = 10;
 
-    // 게시글 등록
-    @ApiOperation(value = "게시글 등록", notes = "게시글 등록 요청을 보냅니다.\n" +
-                                                "이미지/동영상 파일은 최대 3개까지.\n")
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "게시글이 성공적으로 등록되었습니다."),
-            @ApiResponse(code = 400, message = "요청에 문제가 있습니다.")
-    })
+   @Override
     @PostMapping("/post")
     public ResponseEntity<String> createPost(
             @AuthenticationPrincipal UserDetails userDetails,
@@ -63,12 +53,7 @@ public class PostController {
     }
 
     // 전체 게시글 목록 조회
-    @ApiOperation(value = "전체 게시글 목록 조회", notes = "게시글 목록을 조회합니다.\n"+
-                                                        "토큰 없이도 조회 가능.")
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "게시글 목록 조회 성공"),
-            @ApiResponse(code = 404, message = "게시글을 찾을 수 없습니다.")
-    })
+    @Override
     @GetMapping("/posts")
     public ResponseEntity<Page<PostResponseDto>> firstMainList(
             @AuthenticationPrincipal UserDetails userDetails,
@@ -92,11 +77,7 @@ public class PostController {
     }
 
     // 특정 게시글 상세 조회
-    @ApiOperation(value = "특정 게시글 상세 조회", notes = "특정 게시글을 조회합니다.")
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "게시글 조회 성공"),
-            @ApiResponse(code = 404, message = "게시글을 찾을 수 없습니다.")
-    })
+    @Override
     @GetMapping("/post/{postId}")
     public ResponseEntity<PostResponseDto> getPostById(
             @PathVariable Long postId,
@@ -110,12 +91,7 @@ public class PostController {
     }
 
     // 특정 게시글 수정
-    @ApiOperation(value = "특정 게시글 수정", notes = "특정 게시글을 수정합니다.")
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "게시글 수정 성공"),
-            @ApiResponse(code = 400, message = "요청에 문제가 있습니다."),
-            @ApiResponse(code = 404, message = "게시글을 찾을 수 없습니다.")
-    })
+    @Override
     @PutMapping("/post/{postId}")
     public ResponseEntity<PostResponseDto> updatePost(
             @PathVariable Long postId,
@@ -138,11 +114,7 @@ public class PostController {
     }
 
     // 좋아요 등록/삭제
-    @ApiOperation(value = "좋아요 등록/삭제", notes = "특정 게시글에 좋아요를 등록/삭제합니다.")
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "좋아요 등록/삭제 성공"),
-            @ApiResponse(code = 400, message = "잘못된 요청입니다.")
-    })
+    @Override
     @PostMapping("/post/{postId}/like")
     public ResponseEntity<String> toggleLike(
             @PathVariable Long postId,
@@ -161,11 +133,7 @@ public class PostController {
 
 
     // 좋아요를 누른 유저 목록 조회
-    @ApiOperation(value = "좋아요 누른 유저 목록 조회", notes = "특정 게시글에 좋아요를 누른 유저 목록을 조회합니다.\n"+
-                                                            "최대 30명까지만 조회")
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "좋아요 누른 유저 목록 조회 성공")
-    })
+    @Override
     @GetMapping("/post/{postId}/likers")
     public ResponseEntity<List<PostLikedMemberResponseDto>> getLikes(@PathVariable Long postId) {
 
@@ -177,10 +145,7 @@ public class PostController {
 
 
     // 해시태그로 게시글 조회
-    @ApiOperation(value = "해시태그로 게시글 조회", notes = "해시태그로 게시글을 조회합니다.")
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "해시태그로 게시글 조회 성공")
-    })
+    @Override
     @GetMapping("/posts/hashtag/{hashtagName}")
     public ResponseEntity<Page<PostResponseDto>> getPostsByHashtag3(
             @AuthenticationPrincipal UserDetails userDetails,
@@ -199,11 +164,7 @@ public class PostController {
     }
 
     // 사용자별 게시글 조회
-    @ApiOperation(value = "사용자별 게시글 조회", notes = "사용자별 게시글을 조회합니다.\n"+
-                                                        "nickName 으로 조회.")
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "사용자별 게시글 조회 성공")
-    })
+    @Override
     @GetMapping("/posts/user/{nickName}")
     public ResponseEntity<MemberInfoPostResponseDto> getPostsByUser(
             @AuthenticationPrincipal UserDetails userDetails,
@@ -241,11 +202,7 @@ public class PostController {
     }
 
     // 게시글 삭제
-    @ApiOperation(value = "게시글 삭제", notes = "특정 게시글을 삭제합니다.")
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "게시글이 성공적으로 삭제되었습니다."),
-            @ApiResponse(code = 404, message = "게시글을 찾을 수 없습니다.")
-    })
+    @Override
     @DeleteMapping("/post/{postId}")
     public ResponseEntity<String> deletePost(
             @PathVariable Long postId,

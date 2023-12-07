@@ -18,6 +18,7 @@ public class Hashtag {
     @Column(unique = true)
     private String hashtagName;
 
+    @Builder.Default
     @OneToMany(mappedBy = "hashtag")
     private List<PostHashtag> postHashtags = new ArrayList<>();
 

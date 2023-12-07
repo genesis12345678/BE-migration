@@ -26,10 +26,11 @@ public class Post {
     private String postLocation;
     private Float postTemperature;
 
-
+    @Builder.Default
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL)
     private List<MediaFile> mediaFiles = new ArrayList<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL)
     private List<PostHashtag> postHashtags = new ArrayList<>();
 
