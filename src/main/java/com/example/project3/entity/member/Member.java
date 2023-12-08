@@ -49,6 +49,7 @@ public class Member{
 
     private String refreshToken;
 
+    @Builder.Default
     @OneToMany(mappedBy = "member",cascade = CascadeType.ALL)
     private List<Post> posts = new ArrayList<>();
 
