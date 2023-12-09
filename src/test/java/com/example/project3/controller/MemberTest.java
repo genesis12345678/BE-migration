@@ -1,10 +1,10 @@
 package com.example.project3.controller;
 
-import com.example.project3.entity.member.Member;
 import com.example.project3.controller.SignupTest.LoginRequest;
 import com.example.project3.dto.request.SignupRequest;
 import com.example.project3.dto.request.UpdateUserInfoRequest;
-import com.example.project3.dto.response.MemberInfoResponse;
+import com.example.project3.dto.response.member.MemberInfoResponse;
+import com.example.project3.entity.member.Member;
 import com.example.project3.repository.MemberRepository;
 import com.example.project3.service.MemberService;
 import com.example.project3.service.S3Uploader;
@@ -127,15 +127,15 @@ public class MemberTest {
         // then
         MemberInfoResponse memberInfoResponse = objectMapper.readValue(contentAsString, MemberInfoResponse.class);
 
-        assertThat(memberInfoResponse.getEmail()).isEqualTo(signupRequest.getEmail());
-        assertThat(memberInfoResponse.getMessage()).isEqualTo(signupRequest.getMessage());
-        assertThat(memberInfoResponse.getNickName()).isEqualTo(signupRequest.getNickName());
-        assertThat(memberInfoResponse.getName()).isEqualTo(signupRequest.getUserName());
-        assertThat(memberInfoResponse.getAddress()).isEqualTo(signupRequest.getAddress());
-        assertThat(memberInfoResponse.getImageUrl()).isNotNull();
-        assertThat(memberInfoResponse.getSimplifiedPostResponseList()).isEmpty();
-        assertThat(memberInfoResponse.getSocialId()).isNull();
-        assertThat(memberInfoResponse.getSocialType()).isNull();
+        assertThat(memberInfoResponse.email()).isEqualTo(signupRequest.getEmail());
+        assertThat(memberInfoResponse.message()).isEqualTo(signupRequest.getMessage());
+        assertThat(memberInfoResponse.nickName()).isEqualTo(signupRequest.getNickName());
+        assertThat(memberInfoResponse.name()).isEqualTo(signupRequest.getUserName());
+        assertThat(memberInfoResponse.address()).isEqualTo(signupRequest.getAddress());
+        assertThat(memberInfoResponse.imageURL()).isNotNull();
+        assertThat(memberInfoResponse.simplifiedPostResponseResponseList()).isEmpty();
+        assertThat(memberInfoResponse.socialId()).isNull();
+        assertThat(memberInfoResponse.socialType()).isNull();
     }
 
 

@@ -13,6 +13,7 @@ database.db
 scripts/deploy.sh
 appspec.yml
 logs/test.log
+src/test/resources/application.yml
 
 ### STS ###
 .apt_generated

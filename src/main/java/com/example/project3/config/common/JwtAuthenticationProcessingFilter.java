@@ -187,7 +187,7 @@ public class JwtAuthenticationProcessingFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(authentication);
 
                 log.info("Security Context에 '{}' 인증 정보를 저장했습니다", authentication.getName());
-                log.info("저장된 Authentication 객체 : {}", authentication);
+                log.info("저장된 Authentication 객체 정보 : Username = {}, Role = {}", authentication.getName(),authentication.getAuthorities());
 
             }
             filterChain.doFilter(request, response);
