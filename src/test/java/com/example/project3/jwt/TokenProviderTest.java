@@ -1,11 +1,14 @@
 package com.example.project3.jwt;
 
-import com.example.project3.entity.member.Member;
-import com.example.project3.entity.member.Role;
 import com.example.project3.config.jwt.JwtProperties;
 import com.example.project3.config.jwt.TokenProvider;
+import com.example.project3.dto.request.SignupRequest;
+import com.example.project3.entity.member.Member;
+import com.example.project3.entity.member.Role;
+import com.example.project3.mapper.MemberMapper;
 import com.example.project3.repository.MemberRepository;
 import io.jsonwebtoken.Jwts;
+import jakarta.servlet.http.HttpServletRequest;
 import net.datafaker.Faker;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
@@ -16,7 +19,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import jakarta.servlet.http.HttpServletRequest;
 import java.time.Duration;
 import java.util.Base64;
 import java.util.Date;
@@ -40,7 +42,7 @@ import static org.assertj.core.api.Assertions.assertThat;
     private JwtProperties jwtProperties;
 
     @AfterEach
-    void init() {
+    void AfterEach() {
         memberRepository.deleteAll();
     }
 
@@ -57,15 +59,15 @@ import static org.assertj.core.api.Assertions.assertThat;
         String message = faker.lorem().sentence();
 
        Member testMember = Member.builder()
-               .name(username)
-               .email(email)
-               .address(address)
-               .imageURL(imageURL)
-               .nickName(nickName)
-               .message(message)
-               .password("testPassword13@")
-               .role(Role.USER)
-               .build();
+                                 .name(username)
+                                 .email(email)
+                                 .address(address)
+                                 .imageURL(imageURL)
+                                 .nickName(nickName)
+                                 .message(message)
+                                 .password("testPassword13@")
+                                 .role(Role.USER)
+                                 .build();
 
        memberRepository.save(testMember);
 
@@ -76,7 +78,6 @@ import static org.assertj.core.api.Assertions.assertThat;
         String token = tokenProvider.createAccessToken(testMember.getEmail(), testMember.getId());
 
         // then
-
         Long userId = Jwts.parser()
                 .setSigningKey(Base64.getEncoder().encodeToString(jwtProperties.getSecretKey().getBytes()))
                 .parseClaimsJws(token)
@@ -125,27 +126,19 @@ import static org.assertj.core.api.Assertions.assertThat;
         String nickName = faker.name().prefix() + faker.name().firstName();
         String message = faker.lorem().sentence();
 
-        Member testMember = Member.builder()
-                .name(username)
-                .email(email)
-                .address(address)
-                .imageURL(imageURL)
-                .nickName(nickName)
-                .message(message)
-                .password("testPassword13@")
-                .role(Role.USER)
-                .build();
+        Member testMember = MemberMapper.INSTANCE.toMemberEntity(
+                new SignupRequest(username, email, "testPassword12@", address, nickName, message), imageURL);
 
         memberRepository.save(testMember);
+
         String token = JwtFactory.builder()
-                .subject(email)
-                .build()
-                .createToken(jwtProperties);
-        System.out.println("token = " + token);
+                                 .subject(email)
+                                 .build()
+                                 .createToken(jwtProperties);
+
         // when
         Authentication authentication = tokenProvider.getAuthentication(token);
-        Object principal = authentication.getPrincipal();
-        System.out.println("principal = " + principal);
+
         // then
         assertThat(((UserDetails) authentication.getPrincipal()).getUsername()).isEqualTo(email);
     }

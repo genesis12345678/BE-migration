@@ -16,6 +16,6 @@ public record MemberInfoResponse(
         @Schema(description = "회원 한 줄 메시지", example = "날씨가 좋습니다.") String message,
         @Schema(description = "소셜유저 인 경우에만 나타남") String socialId,
         @Schema(description = "소셜유저 인 경우에만 나타남", example = "KAKAO or GOOGLE") SocialType socialType,
-        @Schema(description = "등록했던 글") List<SimplifiedPostResponse> simplifiedPostResponseResponseList) {
+        @Schema(description = "등록했던 글") List<SimplifiedPostResponse> simplifiedPostResponseList) {
 
 }

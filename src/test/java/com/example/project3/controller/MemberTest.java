@@ -1,5 +1,6 @@
 package com.example.project3.controller;
 
+import com.example.project3.config.login.CustomJsonUsernamePasswordAuthenticationFilter;
 import com.example.project3.controller.SignupTest.LoginRequest;
 import com.example.project3.dto.request.SignupRequest;
 import com.example.project3.dto.request.UpdateUserInfoRequest;
@@ -18,7 +19,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
@@ -44,8 +44,8 @@ public class MemberTest {
     @Autowired
     private MemberRepository memberRepository;
 
-    @MockBean
-    private S3Uploader s3Uploader;
+    @Autowired
+    private CustomJsonUsernamePasswordAuthenticationFilter loginFiler;
 
     @Autowired
     private WebApplicationContext context;
@@ -62,7 +62,12 @@ public class MemberTest {
 
     // TODO : 파일 저장하는 법
     @BeforeEach
-    void set() throws Exception {
+    void beforeEach() {
+        this.mockMvc = MockMvcBuilders.webAppContextSetup(context)
+                .addFilter(new CharacterEncodingFilter("UTF-8", true))
+                .addFilter(loginFiler)
+                .alwaysDo(print()).build();
+
          signupRequest = SignupRequest.builder()
                                        .email("test@test.com")
                                        .message("한줄메시지")
@@ -75,12 +80,8 @@ public class MemberTest {
     }
 
     @AfterEach
-    void init() {
-        this.mockMvc = MockMvcBuilders.webAppContextSetup(context)
-                                        .addFilter(new CharacterEncodingFilter("UTF-8", true))
-                                        .alwaysDo(print()).build();
+    void afterEach() {
         memberRepository.deleteAll();
-        s3Uploader.deleteFile("image.jpg");
     }
 
     @Test
@@ -133,7 +134,7 @@ public class MemberTest {
         assertThat(memberInfoResponse.name()).isEqualTo(signupRequest.getUserName());
         assertThat(memberInfoResponse.address()).isEqualTo(signupRequest.getAddress());
         assertThat(memberInfoResponse.imageURL()).isNotNull();
-        assertThat(memberInfoResponse.simplifiedPostResponseResponseList()).isEmpty();
+        assertThat(memberInfoResponse.simplifiedPostResponseList()).isEmpty();
         assertThat(memberInfoResponse.socialId()).isNull();
         assertThat(memberInfoResponse.socialType()).isNull();
     }

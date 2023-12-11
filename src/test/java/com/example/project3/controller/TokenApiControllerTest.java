@@ -2,12 +2,10 @@ package com.example.project3.controller;
 
 import com.example.project3.entity.member.Member;
 import com.example.project3.entity.member.Role;
-import com.example.project3.config.jwt.JwtProperties;
 import com.example.project3.repository.MemberRepository;
 import com.example.project3.service.TokenService;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.datafaker.Faker;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +13,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
-import org.springframework.web.context.WebApplicationContext;
 
 import java.util.Locale;
 
@@ -37,23 +34,13 @@ class TokenApiControllerTest {
     protected MockMvc mockMvc;
 
     @Autowired
-    protected ObjectMapper objectMapper;
-
-    @Autowired
-    private WebApplicationContext context;
-
-    @Autowired
-    JwtProperties jwtProperties;
-
-    @Autowired
-    MemberRepository memberRepository;
+    private MemberRepository memberRepository;
 
     @Autowired
     private TokenService tokenService;
 
-    @BeforeEach
-    public void setMockMvc() {
-//        this.mockMvc = MockMvcBuilders.webAppContextSetup(context).build();
+    @AfterEach
+    void AfterEach() {
         memberRepository.deleteAll();
     }
 
