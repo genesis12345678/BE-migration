@@ -1,6 +1,6 @@
 package com.example.project3.controller.member.getInfo;
 
-import com.example.project3.dto.response.MemberInfoResponse;
+import com.example.project3.dto.response.member.MemberInfoResponse;
 import com.example.project3.service.MemberService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;

@@ -1,18 +1,21 @@
 package com.example.project3.service;
 
-import com.example.project3.entity.MediaFile;
-import com.example.project3.entity.member.Member;
-import com.example.project3.entity.member.Role;
-import com.example.project3.config.jwt.TokenProvider;
 import com.example.project3.dto.request.SignupRequest;
 import com.example.project3.dto.request.UpdateUserInfoRequest;
-import com.example.project3.dto.response.MemberInfoResponse;
-import com.example.project3.dto.response.SimplifiedPostResponse;
+import com.example.project3.dto.response.member.MemberInfoResponse;
+import com.example.project3.dto.response.member.SimplifiedPostResponse;
+import com.example.project3.entity.MediaFile;
+import com.example.project3.entity.Post;
+import com.example.project3.entity.member.Member;
 import com.example.project3.exception.FileUploadException;
 import com.example.project3.exception.MissingFileException;
+import com.example.project3.mapper.MemberInfoResponseMapper;
+import com.example.project3.mapper.MemberMapper;
 import com.example.project3.repository.MemberRepository;
 import com.example.project3.repository.PostRepository;
 import com.example.project3.util.RedisUtil;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -21,33 +24,29 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import jakarta.persistence.EntityNotFoundException;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.transaction.Transactional;
 import java.io.IOException;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Transactional(readOnly = true)
 public class MemberService {
 
     private final MemberRepository memberRepository;
-    private final TokenProvider tokenProvider;
     private final TokenService tokenService;
     private final PostRepository postRepository;
     private final S3Uploader s3Uploader;
     private final RedisUtil redisUtil;
 
-
     public static final String DEFAULT_IMAGE_URL = "https://meatwiki.nii.ac.jp/confluence/images/icons/profilepics/anonymous.png";
 
+    @Transactional
     public ResponseEntity<String> signup(SignupRequest request, MultipartFile file) {
-        BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
         return memberRepository.findByEmail(request.getEmail())
                 .map(member -> {
@@ -58,72 +57,58 @@ public class MemberService {
                     try {
 
                         String imageURL = (file != null && !file.isEmpty()) ? s3Uploader.uploadProfileImage(file) : DEFAULT_IMAGE_URL;
+                        memberRepository.save(MemberMapper.INSTANCE.toMemberEntity(request,imageURL));
 
-                        memberRepository.save(Member.builder()
-                                .name(request.getUserName())
-                                .email(request.getEmail())
-                                .password(passwordEncoder.encode(request.getPassword()))
-                                .address(request.getAddress())
-                                .imageURL(imageURL)
-                                .nickName(request.getNickName())
-                                .message(request.getMessage())
-                                .role(Role.USER)
-                                .build());
                         log.info("회원정보가 저장되었습니다.");
 
                     } catch (IOException e) {
                         log.error("파일 업로드 중 오류 발생");
                         throw new FileUploadException(e.getMessage());
                     }
-
                     return new ResponseEntity<>("Signup Successful", HttpStatus.OK);
                 });
     }
 
 
-    public void signupSocialUser(String token, UpdateUserInfoRequest request, HttpServletResponse response) {
+    @Transactional
+    public void signupSocialUser(String email, UpdateUserInfoRequest request, HttpServletResponse response) {
         log.info("소셜 유저 회원가입 실행");
 
-        String email = tokenProvider.getMemberEmail(token);
+        memberRepository.findByEmail(email).ifPresentOrElse(member -> {
+                    log.info("signupSocialUser() 실행");
+                    log.info("request : {}", request);
 
-        Member member = memberRepository.findByEmail(email)
-                .orElseThrow(EntityNotFoundException::new);
+                    member.signupSocialUser(request.getMessage(), request.getAddress(), request.getNickName());
 
-        member.signupSocialUser(request.getMessage(), request.getAddress(), request.getNickName());
+                    String accessToken = tokenService.createAccessToken(email);
+                    String refreshToken = tokenService.createRefreshToken();
 
-        String accessToken = tokenService.createAccessToken(email);
-        String refreshToken = tokenService.createRefreshToken();
+                    memberRepository.setRefreshToken(email, refreshToken);
 
-        member.updateRefreshToken(refreshToken);
+            log.info("추가로 입력받은 정보로 GUEST -> USER로 변환하고 회원가입을 마무리합니다.");
 
-        memberRepository.save(member);
-        log.info("추가로 입력받은 정보로 GUEST -> USER로 변환하고 회원가입을 마무리합니다.");
-
-        tokenService.sendAccessAndRefreshToken(response, accessToken, refreshToken);
+            tokenService.sendAccessAndRefreshToken(response, accessToken, refreshToken);
+                }, ()-> {
+                    log.error("{} 조회되는 회원 없음", email);
+                    throw new EntityNotFoundException("조회 실패");
+                });
     }
 
     public MemberInfoResponse getMemberInfo(String username, Pageable pageable) {
 
-        Member member = memberRepository.findByEmail(username)
+        return memberRepository.findByEmail(username)
+                .map(member -> {
+                    Page<Post> posts = postRepository.findByMemberIdOrderByCreatedAtDesc(member.getId(), pageable);
+                    List<SimplifiedPostResponse> simplifiedPostResponses = posts.getContent()
+                                                                                .stream()
+                                                                                .map(SimplifiedPostResponse::new)
+                                                                                .toList();
+
+                    return MemberInfoResponseMapper.INSTANCE.toMemberInfoResponse(member, simplifiedPostResponses);
+                })
                 .orElseThrow(EntityNotFoundException::new);
-
-        Page<SimplifiedPostResponse> simplifiedPosts = postRepository.findByMemberIdOrderByCreatedAtDesc(member.getId(), pageable)
-                .map(SimplifiedPostResponse::new);
-
-        return MemberInfoResponse.builder()
-                .memberId(member.getId())
-                .name(member.getName())
-                .email(member.getEmail())
-                .imageUrl(member.getImageURL())
-                .address(member.getAddress())
-                .message(member.getMessage())
-                .nickName(member.getNickName())
-                .socialId(member.getSocialId())
-                .socialType(member.getSocialType())
-                .simplifiedPostResponseList(simplifiedPosts.getContent())
-                .build();
-
     }
+
 
     @Transactional
     public void deleteAccount(String email, String accessToken) {

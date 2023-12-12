@@ -6,8 +6,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
 import jakarta.persistence.*;
+import org.hibernate.annotations.BatchSize;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,6 +28,7 @@ public class Post {
 
     @Builder.Default
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL)
+    @BatchSize(size = 10)
     private List<MediaFile> mediaFiles = new ArrayList<>();
 
     @Builder.Default

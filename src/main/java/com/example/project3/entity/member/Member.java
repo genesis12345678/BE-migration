@@ -1,10 +1,11 @@
 package com.example.project3.entity.member;
 
 import com.example.project3.entity.Post;
-import lombok.*;
-import lombok.extern.slf4j.Slf4j;
-
 import jakarta.persistence.*;
+import lombok.*;
+import org.hibernate.annotations.DynamicInsert;
+import org.hibernate.annotations.DynamicUpdate;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,7 +15,8 @@ import java.util.List;
 @Entity
 @Builder
 @AllArgsConstructor
-@Slf4j
+@DynamicUpdate
+@DynamicInsert
 public class Member{
 
     @Id
@@ -78,10 +80,6 @@ public class Member{
 
 
     public void signupSocialUser(String message, String address, String nickName) {
-        log.info("signupSocialUser() 실행");
-        log.info("message : {}", message);
-        log.info("address : {}", address);
-        log.info("nickName : {}", nickName);
         this.message = (message != null) ? message : this.message;
         this.address = (address != null) ? address : this.address;
         this.nickName = (nickName != null) ? nickName : this.nickName;

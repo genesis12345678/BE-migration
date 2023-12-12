@@ -1,6 +1,6 @@
 package com.example.project3.controller.member.getInfo;
 
-import com.example.project3.dto.response.MemberInfoResponse;
+import com.example.project3.dto.response.member.MemberInfoResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;

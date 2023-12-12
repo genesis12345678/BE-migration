@@ -30,7 +30,6 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         try{
             CustomOAuth2User oAuth2User =(CustomOAuth2User) authentication.getPrincipal();
 
-            // Role이 GUEST일 경우 처음 요청한 회원이므로 추가정보를 위해 회원가입 페이지 리다이렉트
             if (oAuth2User.getRole() == Role.GUEST) {
                 String accessToken = tokenService.createAccessToken(extractEmail(oAuth2User));
 
@@ -40,10 +39,8 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         }catch(Exception e){
             throw e;
         }
-
-
-
     }
+
 
     // TODO : 소셜 로그인 시에 무조건 토큰 생성 말고 JWT 인증 필터처럼 RefreshToken 유/무에 따라 다르게 처리해보기
     private void loginSuccess(HttpServletResponse response, CustomOAuth2User oAuth2User) {
@@ -55,17 +52,14 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
     }
 
     private String extractEmail(CustomOAuth2User oAuth2User) {
-        log.info("oAuth2User.getAttributes : {}", oAuth2User.getAttributes());
 
         String email = null;
-
         Map<String, Object> attributes = oAuth2User.getAttributes();
 
         // Google 계정 정보에서 이메일 추출
         if (attributes.containsKey("email")) {
             email = (String) attributes.get("email");
         }
-
         // Kakao 계정 정보에서 이메일 추출
         if (attributes.containsKey("kakao_account")) {
             Map<String, Object> account = (Map<String, Object>) attributes.get("kakao_account");
@@ -73,10 +67,7 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
                 email = (String) account.get("email");
             }
         }
-
         log.info("추출된 Email: {}", email);
-
         return email;
     }
-
 }

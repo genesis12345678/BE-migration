@@ -1,21 +1,22 @@
 package com.example.project3.controller;
 
-import com.example.project3.entity.member.Member;
+import com.example.project3.config.login.CustomJsonUsernamePasswordAuthenticationFilter;
 import com.example.project3.dto.request.SignupRequest;
+import com.example.project3.entity.member.Member;
 import com.example.project3.repository.MemberRepository;
 import com.example.project3.service.MemberService;
-import com.example.project3.service.S3Uploader;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import net.datafaker.Faker;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
@@ -29,7 +30,8 @@ import java.util.Locale;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -41,13 +43,13 @@ public class SignupTest {
     private final static Faker faker = new Faker(new Locale("ko"));
 
     @Autowired
+    private CustomJsonUsernamePasswordAuthenticationFilter loginFiler;
+
+    @Autowired
     private MemberService memberService;
 
     @Autowired
     private MemberRepository memberRepository;
-
-    @MockBean
-    private S3Uploader s3Uploader;
 
     @Autowired
     private WebApplicationContext context;
@@ -57,32 +59,25 @@ public class SignupTest {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    @BeforeEach
+    void BeforeEach() {
+        mockMvc = MockMvcBuilders.webAppContextSetup(context)
+                .addFilter(loginFiler)
+                .build();
+    }
+
     @AfterEach
-    void init() {
-        this.mockMvc = MockMvcBuilders.webAppContextSetup(context).build();
+    void AfterEach() {
         memberRepository.deleteAll();
-        s3Uploader.deleteFile("image.jpg");
     }
 
     @Test
     @DisplayName("회원 가입에 성공한다.")
     void successSignUp() throws Exception{
         // given
-        // Mock data
-        String username = faker.name().lastName() + faker.name().firstName();
-        String email = faker.internet().emailAddress();
-        String address = faker.address().fullAddress();
-        String imageURL = faker.internet().avatar();
-        String nickName = faker.name().prefix() + faker.name().firstName();
-        String message = faker.lorem().sentence();
-
-        SignupRequest signupRequest = new SignupRequest(username, email, "password12@",
-                address, nickName, message);
-
-        final String requestBody = objectMapper.writeValueAsString(signupRequest);
+        SignupRequest signupRequest = getSignupRequest();
 
         // when
-
         ResultActions result = getSignupResult(signupRequest);
         Member member = memberRepository.findByEmail(signupRequest.getEmail()).get();
 
@@ -91,17 +86,16 @@ public class SignupTest {
         assertThat(member.getPassword()).isNotEqualTo(signupRequest.getPassword());
 
         result.andExpect(status().isOk())
-                .andExpect(content().string("Signup Successful"));
+              .andExpect(content().string("Signup Successful"));
     }
 
     @Test
-    @DisplayName("회원 가입에 실패한다.(유효하지 않은 이메일과 비밀번호, 전화번호)")
+    @DisplayName("회원 가입에 실패한다.(유효하지 않은 이메일과 비밀번호)")
     void failSignup() throws Exception{
         // given
         String username = faker.name().lastName() + faker.name().firstName();
         String email = faker.internet().password();
         String password = faker.internet().password(8, 20);
-        System.out.println("password = " + password);
         String address = faker.address().fullAddress();
         String nickName = faker.name().prefix() + faker.name().firstName();
         String message = faker.lorem().sentence();
@@ -124,16 +118,7 @@ public class SignupTest {
     @DisplayName("회원 가입에 실패한다.(중복 회원)")
     void duplicateSignup() throws Exception{
         // given
-        String username = faker.name().lastName() + faker.name().firstName();
-        String email = faker.internet().emailAddress();
-        String password = faker.internet().password(8,15) + "12@";
-        System.out.println("password = " + password);
-        String address = faker.address().fullAddress();
-        String nickName = faker.name().prefix() + faker.name().firstName();
-        String message = faker.lorem().sentence();
-
-        SignupRequest request = new SignupRequest(username, email, password,
-                address, nickName, message);
+        SignupRequest request = getSignupRequest();
 
         MockMultipartFile file = null;
         // when
@@ -154,28 +139,18 @@ public class SignupTest {
     }
 
 
-
     @DisplayName("로그인 성공, AccessToken과 RefreshToken 응답 완료")
     @Test
     void login() throws Exception {
         // given
         final String url = "/login";
 
-        String username = faker.name().lastName() + faker.name().firstName();
-        String email = faker.internet().emailAddress();
-        String address = faker.address().fullAddress();
-        String imageURL = faker.internet().avatar();
-        String nickName = faker.name().prefix() + faker.name().firstName();
-        String message = faker.lorem().sentence();
-        String password = "testPassword13@";
-
-        SignupRequest request = new SignupRequest(username, email, password,
-                address, nickName, message);
+        SignupRequest request = getSignupRequest();
 
         // when
-        getSignupResult(request); // 먼저 "/api/signup"으로 회원가입 신청
+        getSignupResult(request).andExpect(status().isOk()); // 먼저 "/api/signup"으로 회원가입 신청
 
-        LoginRequest loginRequest = new LoginRequest(email, password);
+        LoginRequest loginRequest = new LoginRequest(request.getEmail(), request.getPassword());
 
         final String requestBody = objectMapper.writeValueAsString(loginRequest);
 
@@ -197,14 +172,26 @@ public class SignupTest {
         MockMultipartFile file = new MockMultipartFile("file", "image.jpg", "image/jpeg","content".getBytes());
 
 
-        ResultActions result = mockMvc.perform(multipart("/api/signup")
+        return mockMvc.perform(multipart("/api/signup")
                         .file(file)
                         .file(request)
                         .contentType(MediaType.MULTIPART_FORM_DATA)
                         .accept(MediaType.APPLICATION_JSON)
                         .characterEncoding(StandardCharsets.UTF_8))
                         .andDo(print());
-        return result;
+    }
+
+    @NotNull
+    private SignupRequest getSignupRequest() {
+        String username = faker.name().lastName() + faker.name().firstName();
+        String email = faker.internet().emailAddress();
+        String password = faker.internet().password(8,15) + "12@";
+        String address = faker.address().fullAddress();
+        String nickName = faker.name().prefix() + faker.name().firstName();
+        String message = faker.lorem().sentence();
+
+        return new SignupRequest(username, email, password,
+                address, nickName, message);
     }
 
     @AllArgsConstructor

@@ -20,14 +20,14 @@ public class MemberDetailService implements UserDetailsService {
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         log.info("loadUserByUserName 실행");
 
-       return memberRepository.findByEmail(email).map(
+       return memberRepository.findUserDetails(email).map(
                member -> {
                    log.info("UserDetails를 전달합니다.");
-        //      org.springframework.security.core.userdetails.User
+        //      org.springframework.security.core.UserDetails.User
                    return User.builder()
                            .username(member.getEmail())
                            .password(member.getPassword())
-                           .roles(member.getRole().getValue())
+                           .roles(member.getRole())
                            .build();
                }).orElseThrow(()->{
                     log.error("{}이 DB에서 조회되지 않습니다.", email);

@@ -10,6 +10,7 @@ import org.springframework.security.web.authentication.SimpleUrlAuthenticationSu
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -19,10 +20,11 @@ public class LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
     private final MemberRepository memberRepository;
 
     @Override
+    @Transactional
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
                                         Authentication authentication) {
         log.info("로그인에 성공해 LoginSuccessHandler가 실행됩니다.");
-        log.info("CustomJsonUsernamePasswordAuthenticationFilter에서 넘어온 인증 정보 : {}", authentication);
+        log.info("CustomJsonUsernamePasswordAuthenticationFilter에서 넘어온 인증 정보 : {}, {}", authentication.getName(), authentication.getAuthorities());
 
         String email = extractUsername(authentication); // 인증 정보에서 Username(email) 추출
         String accessToken = tokenService.createAccessToken(email); // tokenService의 createAccessToken을 사용하여 AccessToken 발급
@@ -32,11 +34,7 @@ public class LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
         // 멤버 조회 후 생성된 RefreshToken을 DB에 저장
         log.info("추출된 이메일 '{}' 로 DB에서 찾은 후, RefreshToken 저장", email);
-        memberRepository.findByEmail(email)
-                        .ifPresent(member -> {
-                            member.updateRefreshToken(refreshToken);
-                            memberRepository.save(member);
-                        });
+        memberRepository.setRefreshToken(email, refreshToken);
 
         log.info("로그인에 성공하였습니다. 이메일 : {}", email);
         log.info("로그인에 성공하였습니다. AccessToken : {}", accessToken);
